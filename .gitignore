@@ -1,2 +1,26 @@
+# Documentation / Local notes
 docs/
 docs/**
+
+# Python & Django (server)
+server/venv/
+server/.env
+server/.env.*
+server/__pycache__/
+*.py[cod]
+server/db.sqlite3
+server/media/
+server/staticfiles/
+
+# Next.js & Node (client)
+client/node_modules/
+client/.next/
+client/.env.local
+client/.env*.local
+client/out/
+client/build/
+
+# System / OS
+.DS_Store
+Thumbs.db
+*.log
