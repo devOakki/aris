@@ -78,12 +78,19 @@
 | **2026-09-04** | Complete Production Schema & Models Implementation | Engineered 13 production models across all 6 Django apps (`core`, `accounts`, `projects`, `submissions`, `approvals`, `notifications`). Introduced `ProjectTrack` cohort engine, `AcademicSession` controller, live demo/screenshot gallery submissions, and department scoping. |
 | **2026-09-04** | Django Admin Registration & Schema Migration | Registered all 13 models in each app's `admin.py` with custom search fields, filters, and list displays. Executed `makemigrations` and successfully applied all migrations to PostgreSQL 17. Created initial superuser. |
 | **2026-09-04** | Production ERD v2 Generated | Generated updated, color-coded, 13-entity high-resolution ERD diagram on Eraser.io, synced to `assets/erd_diagram.png` and documented in `docs/ERD.md`. |
+| **2026-09-04** | Database Seeding & Admin Configuration | Successfully seeded initial DBUU test accounts (Dean, HOD, 2 Faculty Supervisors, 4 Project Ideas, 1 Active Session, 1 Active Track, 4 Students). |
+| **2026-09-04** | Complete REST API Backend Layer (Phase 2) | Engineered all serializers, permissions, views, and URL routers across all 6 Django apps (`core`, `accounts`, `projects`, `submissions`, `approvals`, `notifications`). Implemented custom JWT claims (`role`, `department`, `full_name`, `university_id`), dynamic faculty marketplace capacity calculation, progressive submission engine, HOD/Dean dossier review workflows, and automated notification triggers. |
+| **2026-09-04** | Automated End-to-End API Integration Testing | Executed comprehensive test suite simulating real HTTP API calls across all 6 apps; 100% of endpoints verified operational. |
 
 ---
 
 ## 6. Next Steps
-- [ ] Create database seeding script (`manage.py seed_data`) to populate initial demo accounts (Dean, HOD, Supervisors, Students, active session & track).
-- [ ] Implement SimpleJWT Authentication API (`/api/auth/login/`, `/api/auth/register/`, `/api/auth/me/`) with custom token claims.
-- [ ] Build core REST API ViewSets for Tracks, Groups, Proposals, Submissions, and Approvals.
-- [ ] Initialize Next.js 14 App Router frontend in `client/` with Tailwind CSS, shadcn/ui, and DBUU brand palette.
-- [ ] Implement 4 role portals (Student, Supervisor, HOD, Dean) and Public Search Archive.
+- [x] Create database seeding script to populate initial demo accounts (Dean, HOD, Supervisors, Students, active session & track).
+- [x] Implement SimpleJWT Authentication API (`/api/auth/login/`, `/api/auth/register/`, `/api/auth/me/`) with custom token claims.
+- [x] Build core REST API Serializers, Views, and URL Routing for Tracks, Groups, Proposals, Submissions, and Approvals.
+- [ ] Initialize Next.js 14 App Router frontend in `client/` with Tailwind CSS, Lucide icons, and DBUU brand palette.
+- [ ] Implement Clean Institutional Frontend Portals for the 4 roles:
+  - **Student Portal**: Group creation, supervisor selection, proposal submission, progressive artifact upload.
+  - **Supervisor Portal**: Idea bank management, group approval/rejection with feedback.
+  - **HOD Portal**: Departmental dossier review and project track creation.
+  - **Dean Portal**: Institutional project sign-off and public project archive.
