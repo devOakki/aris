@@ -1,6 +1,8 @@
-# Documentation / Local notes
-docs/
-docs/**
+# Documentation / Large binaries
+docs/*.pdf
+docs/*.pptx
+docs/*.docx
+docs/*.html
 
 # Python & Django (server)
 server/venv/

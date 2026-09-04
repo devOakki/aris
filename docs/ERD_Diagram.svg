@@ -1,0 +1,296 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1150" width="100%" height="100%" style="background:#0b0f19; font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f19"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="card-auth" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="card-project" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="card-sub" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#701a75"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="card-workflow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c2d12"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+
+    <!-- Filters for Glow & Shadows -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+    
+    <!-- Markers -->
+    <marker id="dot" markerWidth="8" markerHeight="8" refX="4" refY="4">
+      <circle cx="4" cy="4" r="3" fill="#38bdf8" />
+    </marker>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#38bdf8" />
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#10b981" />
+    </marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#c084fc" />
+    </marker>
+  </defs>
+
+  <!-- Background Grid -->
+  <rect width="1600" height="1150" fill="url(#bg-grad)"/>
+  <g opacity="0.05" stroke="#ffffff" stroke-width="1">
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40"/>
+    </pattern>
+    <rect width="1600" height="1150" fill="url(#grid)"/>
+  </g>
+
+  <!-- HEADER -->
+  <g transform="translate(50, 40)">
+    <text x="0" y="24" fill="#38bdf8" font-size="14" font-weight="700" letter-spacing="2">DEV BHOOMI UTTARAKHAND UNIVERSITY (DBUU)</text>
+    <text x="0" y="58" fill="#ffffff" font-size="28" font-weight="800">ARIS — Entity Relationship Diagram (ERD)</text>
+    <text x="0" y="82" fill="#94a3b8" font-size="14">Scalable 10-Entity Relational Schema for Academic Project Management (Minor/Major)</text>
+
+    <!-- Legend Badges -->
+    <g transform="translate(900, 15)">
+      <rect x="0" y="0" width="130" height="28" rx="6" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5"/>
+      <text x="65" y="18" fill="#a5b4fc" font-size="12" font-weight="600" text-anchor="middle">Identity &amp; Profiles</text>
+      
+      <rect x="145" y="0" width="130" height="28" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1.5"/>
+      <text x="210" y="18" fill="#6ee7b7" font-size="12" font-weight="600" text-anchor="middle">Groups &amp; Ideas</text>
+
+      <rect x="290" y="0" width="140" height="28" rx="6" fill="#701a75" stroke="#f472b6" stroke-width="1.5"/>
+      <text x="360" y="18" fill="#fbcfe8" font-size="12" font-weight="600" text-anchor="middle">Submissions &amp; S3</text>
+
+      <rect x="445" y="0" width="150" height="28" rx="6" fill="#7c2d12" stroke="#fb923c" stroke-width="1.5"/>
+      <text x="520" y="18" fill="#fed7aa" font-size="12" font-weight="600" text-anchor="middle">Review &amp; Deadlines</text>
+    </g>
+  </g>
+
+  <!-- ================= RELATIONSHIP CONNECTIONS (LINES) ================= -->
+  <!-- User to SupervisorProfile -->
+  <path d="M 280 270 L 280 340" stroke="#6366f1" stroke-width="2" fill="none" marker-end="url(#arrow)" stroke-dasharray="4"/>
+  <!-- User to StudentProfile -->
+  <path d="M 170 270 L 170 560" stroke="#6366f1" stroke-width="2" fill="none" marker-end="url(#arrow)" stroke-dasharray="4"/>
+  <!-- StudentProfile to GroupMember -->
+  <path d="M 280 660 L 400 660" stroke="#6366f1" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <!-- GroupMember to StudentGroup -->
+  <path d="M 640 660 L 730 660" stroke="#10b981" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <!-- Supervisor to StudentGroup -->
+  <path d="M 450 420 L 860 420 L 860 550" stroke="#10b981" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <!-- Supervisor to ProjectIdea -->
+  <path d="M 450 370 L 730 370" stroke="#10b981" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <!-- StudentGroup to ProjectIdea (Lock) -->
+  <path d="M 800 550 L 800 450" stroke="#10b981" stroke-width="2" fill="none" marker-end="url(#arrow-green)" stroke-dasharray="3"/>
+  <!-- StudentGroup to ProjectProposal -->
+  <path d="M 860 765 L 860 840" stroke="#10b981" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <!-- ProjectProposal to ProjectIdea -->
+  <path d="M 990 840 L 990 400 L 970 400" stroke="#10b981" stroke-width="1.5" fill="none" stroke-dasharray="4"/>
+  <!-- StudentGroup to ProjectSubmission -->
+  <path d="M 990 660 L 1090 660" stroke="#f472b6" stroke-width="2" fill="none" marker-end="url(#arrow-purple)"/>
+  <!-- StudentGroup to ApprovalRecord -->
+  <path d="M 990 700 L 1060 700 L 1060 920 L 1090 920" stroke="#fb923c" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <!-- CustomUser to Notification -->
+  <path d="M 330 180 L 1400 180 L 1400 230" stroke="#38bdf8" stroke-width="1.5" fill="none" stroke-dasharray="4" marker-end="url(#arrow)"/>
+
+  <!-- ================= ENTITY CARDS ================= -->
+
+  <!-- 1. CUSTOM_USER -->
+  <g transform="translate(60, 140)" filter="url(#shadow)">
+    <rect width="270" height="130" rx="10" fill="url(#card-auth)" stroke="#6366f1" stroke-width="1.5"/>
+    <rect width="270" height="32" rx="10" fill="#312e81"/>
+    <text x="12" y="21" fill="#ffffff" font-size="14" font-weight="700">CUSTOM_USER</text>
+    <rect x="200" y="7" width="58" height="18" rx="4" fill="#4f46e5"/>
+    <text x="229" y="20" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">AUTH_BASE</text>
+    
+    <text x="12" y="52" fill="#38bdf8" font-size="11" font-family="monospace">PK  id : UUID</text>
+    <text x="12" y="68" fill="#f8fafc" font-size="11" font-family="monospace">UQ  email : String</text>
+    <text x="12" y="84" fill="#cbd5e1" font-size="11" font-family="monospace">    role : Enum (STUDENT|SUPERVISOR...)</text>
+    <text x="12" y="100" fill="#cbd5e1" font-size="11" font-family="monospace">    avatar_s3_url : String (AWS S3)</text>
+    <text x="12" y="116" fill="#64748b" font-size="11" font-family="monospace">    created_at, is_active</text>
+  </g>
+
+  <!-- 2. SUPERVISOR_PROFILE -->
+  <g transform="translate(60, 310)" filter="url(#shadow)">
+    <rect width="390" height="190" rx="10" fill="url(#card-auth)" stroke="#6366f1" stroke-width="1.5"/>
+    <rect width="390" height="32" rx="10" fill="#312e81"/>
+    <text x="12" y="21" fill="#ffffff" font-size="14" font-weight="700">SUPERVISOR_PROFILE</text>
+    <rect x="315" y="7" width="62" height="18" rx="4" fill="#4f46e5"/>
+    <text x="346" y="20" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">FACULTY</text>
+    
+    <text x="12" y="52" fill="#38bdf8" font-size="11" font-family="monospace">PK  id : UUID</text>
+    <text x="12" y="68" fill="#f43f5e" font-size="11" font-family="monospace">FK  user_id : UUID (1:1 CustomUser)</text>
+    <text x="12" y="84" fill="#f8fafc" font-size="11" font-family="monospace">UQ  employee_id : String</text>
+    <text x="12" y="100" fill="#cbd5e1" font-size="11" font-family="monospace">    designation, department : String</text>
+    <text x="12" y="116" fill="#38bdf8" font-size="11" font-family="monospace">GIN expertise_domains : JSONB</text>
+    <text x="12" y="132" fill="#38bdf8" font-size="11" font-family="monospace">GIN expertise_technologies : JSONB</text>
+    <text x="12" y="148" fill="#fbbf24" font-size="11" font-family="monospace">    max_groups : Int (Default: 10)</text>
+    <text x="12" y="164" fill="#cbd5e1" font-size="11" font-family="monospace">    is_accepting : Boolean (Intake toggle)</text>
+    <text x="12" y="180" fill="#64748b" font-size="11" font-family="monospace">    bio, created_at, updated_at</text>
+  </g>
+
+  <!-- 3. STUDENT_PROFILE -->
+  <g transform="translate(60, 540)" filter="url(#shadow)">
+    <rect width="290" height="160" rx="10" fill="url(#card-auth)" stroke="#6366f1" stroke-width="1.5"/>
+    <rect width="290" height="32" rx="10" fill="#312e81"/>
+    <text x="12" y="21" fill="#ffffff" font-size="14" font-weight="700">STUDENT_PROFILE</text>
+    <rect x="215" y="7" width="62" height="18" rx="4" fill="#4f46e5"/>
+    <text x="246" y="20" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">STUDENT</text>
+    
+    <text x="12" y="52" fill="#38bdf8" font-size="11" font-family="monospace">PK  id : UUID</text>
+    <text x="12" y="68" fill="#f43f5e" font-size="11" font-family="monospace">FK  user_id : UUID (1:1 CustomUser)</text>
+    <text x="12" y="84" fill="#f8fafc" font-size="11" font-family="monospace">UQ  erp_id : String (Roll No)</text>
+    <text x="12" y="100" fill="#cbd5e1" font-size="11" font-family="monospace">    program, department : String</text>
+    <text x="12" y="116" fill="#cbd5e1" font-size="11" font-family="monospace">    current_academic_year : String</text>
+    <text x="12" y="132" fill="#cbd5e1" font-size="11" font-family="monospace">    current_semester : Int</text>
+    <text x="12" y="148" fill="#64748b" font-size="11" font-family="monospace">    created_at, updated_at</text>
+  </g>
+
+  <!-- 4. GROUP_MEMBER (Bridge Entity) -->
+  <g transform="translate(400, 580)" filter="url(#shadow)">
+    <rect width="240" height="130" rx="10" fill="url(#card-project)" stroke="#10b981" stroke-width="1.5"/>
+    <rect width="240" height="32" rx="10" fill="#065f46"/>
+    <text x="12" y="21" fill="#ffffff" font-size="14" font-weight="700">GROUP_MEMBER</text>
+    <rect x="175" y="7" width="52" height="18" rx="4" fill="#059669"/>
+    <text x="201" y="20" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">BRIDGE</text>
+    
+    <text x="12" y="52" fill="#38bdf8" font-size="11" font-family="monospace">PK  id : UUID</text>
+    <text x="12" y="68" fill="#f43f5e" font-size="11" font-family="monospace">FK  group_id : UUID</text>
+    <text x="12" y="84" fill="#f43f5e" font-size="11" font-family="monospace">FK  student_id : UUID</text>
+    <text x="12" y="100" fill="#f8fafc" font-size="11" font-family="monospace">UQ (group_id, student_id)</text>
+    <text x="12" y="116" fill="#fbbf24" font-size="11" font-family="monospace">    member_role: LEADER|MEMBER</text>
+  </g>
+
+  <!-- 5. STUDENT_GROUP -->
+  <g transform="translate(730, 550)" filter="url(#shadow)">
+    <rect width="260" height="215" rx="10" fill="url(#card-project)" stroke="#10b981" stroke-width="1.5"/>
+    <rect width="260" height="32" rx="10" fill="#065f46"/>
+    <text x="12" y="21" fill="#ffffff" font-size="14" font-weight="700">STUDENT_GROUP</text>
+    <rect x="195" y="7" width="52" height="18" rx="4" fill="#059669"/>
+    <text x="221" y="20" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">MAX 3</text>
+    
+    <text x="12" y="52" fill="#38bdf8" font-size="11" font-family="monospace">PK  id : UUID</text>
+    <text x="12" y="68" fill="#f8fafc" font-size="11" font-family="monospace">    name : String</text>
+    <text x="12" y="84" fill="#cbd5e1" font-size="11" font-family="monospace">    project_type : MINOR_1|2|MAJOR</text>
+    <text x="12" y="100" fill="#cbd5e1" font-size="11" font-family="monospace">    academic_year, semester</text>
+    <text x="12" y="116" fill="#f43f5e" font-size="11" font-family="monospace">FK  supervisor_id : UUID</text>
+    <text x="12" y="132" fill="#f43f5e" font-size="11" font-family="monospace">FK  created_by_id : UUID</text>
+    <text x="12" y="148" fill="#fbbf24" font-size="11" font-family="monospace">    status : GroupStatusEnum</text>
+    <text x="12" y="164" fill="#94a3b8" font-size="10" font-family="monospace">    (FORMED->ACTIVE->SUBMITTED</text>
+    <text x="12" y="178" fill="#94a3b8" font-size="10" font-family="monospace">     ->HOD_APPROVED->DEAN_APPROVED)</text>
+    <text x="12" y="196" fill="#64748b" font-size="11" font-family="monospace">    created_at, updated_at</text>
+  </g>
+
+  <!-- 6. PROJECT_IDEA (Supervisor Marketplace with Lock) -->
+  <g transform="translate(730, 260)" filter="url(#shadow)">
+    <rect width="280" height="190" rx="10" fill="url(#card-project)" stroke="#10b981" stroke-width="1.5"/>
+    <rect width="280" height="32" rx="10" fill="#065f46"/>
+    <text x="12" y="21" fill="#ffffff" font-size="14" font-weight="700">PROJECT_IDEA</text>
+    <rect x="180" y="7" width="88" height="18" rx="4" fill="#059669"/>
+    <text x="224" y="20" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">ATOMIC_LOCK</text>
+    
+    <text x="12" y="52" fill="#38bdf8" font-size="11" font-family="monospace">PK  id : UUID</text>
+    <text x="12" y="68" fill="#f43f5e" font-size="11" font-family="monospace">FK  supervisor_id : UUID</text>
+    <text x="12" y="84" fill="#f8fafc" font-size="11" font-family="monospace">    title, domain : String</text>
+    <text x="12" y="100" fill="#cbd5e1" font-size="11" font-family="monospace">    problem_statement, novelty : Text</text>
+    <text x="12" y="116" fill="#38bdf8" font-size="11" font-family="monospace">GIN technologies : JSONB</text>
+    <text x="12" y="132" fill="#ef4444" font-size="11" font-weight="700" font-family="monospace">🔒 is_taken : Boolean (Lock)</text>
+    <text x="12" y="148" fill="#f43f5e" font-size="11" font-family="monospace">FK  taken_by_group_id : UUID</text>
+    <text x="12" y="164" fill="#cbd5e1" font-size="11" font-family="monospace">    locked_at : DateTime</text>
+    <text x="12" y="180" fill="#64748b" font-size="11" font-family="monospace">    created_at, updated_at</text>
+  </g>
+
+  <!-- 7. PROJECT_PROPOSAL -->
+  <g transform="translate(730, 840)" filter="url(#shadow)">
+    <rect width="280" height="200" rx="10" fill="url(#card-project)" stroke="#10b981" stroke-width="1.5"/>
+    <rect width="280" height="32" rx="10" fill="#065f46"/>
+    <text x="12" y="21" fill="#ffffff" font-size="14" font-weight="700">PROJECT_PROPOSAL</text>
+    <rect x="200" y="7" width="68" height="18" rx="4" fill="#059669"/>
+    <text x="234" y="20" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">VERSIONED</text>
+    
+    <text x="12" y="52" fill="#38bdf8" font-size="11" font-family="monospace">PK  id : UUID</text>
+    <text x="12" y="68" fill="#f43f5e" font-size="11" font-family="monospace">FK  group_id : UUID</text>
+    <text x="12" y="84" fill="#cbd5e1" font-size="11" font-family="monospace">    proposal_type : FROM_LIST|OWN</text>
+    <text x="12" y="100" fill="#f43f5e" font-size="11" font-family="monospace">FK  project_idea_id : UUID (null)</text>
+    <text x="12" y="116" fill="#f8fafc" font-size="11" font-family="monospace">    title, domain, technologies</text>
+    <text x="12" y="132" fill="#fbbf24" font-size="11" font-family="monospace">    status : PENDING|APPROVED|REJECTED</text>
+    <text x="12" y="148" fill="#38bdf8" font-size="11" font-family="monospace">    version : Int (Increments)</text>
+    <text x="12" y="164" fill="#fca5a5" font-size="11" font-family="monospace">    supervisor_feedback : Text</text>
+    <text x="12" y="180" fill="#64748b" font-size="11" font-family="monospace">    submitted_at, decided_at</text>
+  </g>
+
+  <!-- 8. PROJECT_SUBMISSION (AWS S3 URLs) -->
+  <g transform="translate(1090, 540)" filter="url(#shadow)">
+    <rect width="440" height="230" rx="10" fill="url(#card-sub)" stroke="#f472b6" stroke-width="1.5"/>
+    <rect width="440" height="32" rx="10" fill="#831843"/>
+    <text x="12" y="21" fill="#ffffff" font-size="14" font-weight="700">PROJECT_SUBMISSION</text>
+    <rect x="330" y="7" width="98" height="18" rx="4" fill="#db2777"/>
+    <text x="379" y="20" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">AWS S3 STORAGE</text>
+    
+    <text x="12" y="52" fill="#38bdf8" font-size="11" font-family="monospace">PK  id : UUID</text>
+    <text x="12" y="68" fill="#f43f5e" font-size="11" font-family="monospace">FK  group_id : UUID (1:1 with StudentGroup)</text>
+    <text x="12" y="84" fill="#f8fafc" font-size="11" font-family="monospace">    github_repo_url : Text</text>
+    <text x="12" y="104" fill="#f472b6" font-size="11" font-weight="700" font-family="monospace">☁️ synopsis_s3_url : Text (S3 Object Key/URL)</text>
+    <text x="12" y="120" fill="#f472b6" font-size="11" font-weight="700" font-family="monospace">☁️ ppt_s3_url : Text (S3 Object Key/URL)</text>
+    <text x="12" y="136" fill="#f472b6" font-size="11" font-weight="700" font-family="monospace">☁️ report_s3_url : Text (S3 Object Key/URL)</text>
+    <text x="12" y="156" fill="#cbd5e1" font-size="11" font-family="monospace">    synopsis_submitted_at : DateTime</text>
+    <text x="12" y="172" fill="#cbd5e1" font-size="11" font-family="monospace">    ppt_submitted_at : DateTime</text>
+    <text x="12" y="188" fill="#cbd5e1" font-size="11" font-family="monospace">    report_submitted_at : DateTime</text>
+    <text x="12" y="204" fill="#10b981" font-size="11" font-family="monospace">    all_completed_at : DateTime</text>
+    <text x="12" y="220" fill="#64748b" font-size="11" font-family="monospace">    created_at, updated_at</text>
+  </g>
+
+  <!-- 9. APPROVAL_RECORD -->
+  <g transform="translate(1090, 840)" filter="url(#shadow)">
+    <rect width="440" height="150" rx="10" fill="url(#card-workflow)" stroke="#fb923c" stroke-width="1.5"/>
+    <rect width="440" height="32" rx="10" fill="#9a3412"/>
+    <text x="12" y="21" fill="#ffffff" font-size="14" font-weight="700">APPROVAL_RECORD</text>
+    <rect x="330" y="7" width="98" height="18" rx="4" fill="#ea580c"/>
+    <text x="379" y="20" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">AUDIT_TRAIL</text>
+    
+    <text x="12" y="52" fill="#38bdf8" font-size="11" font-family="monospace">PK  id : UUID</text>
+    <text x="12" y="68" fill="#f43f5e" font-size="11" font-family="monospace">FK  group_id : UUID</text>
+    <text x="12" y="84" fill="#fbbf24" font-size="11" font-family="monospace">    stage : Enum (HOD | DEAN)</text>
+    <text x="12" y="100" fill="#cbd5e1" font-size="11" font-family="monospace">    action : Enum (APPROVED | REJECTED)</text>
+    <text x="12" y="116" fill="#fca5a5" font-size="11" font-family="monospace">    comment : Text (Mandatory feedback)</text>
+    <text x="12" y="132" fill="#f43f5e" font-size="11" font-family="monospace">FK  actioned_by_id : UUID (CustomUser)</text>
+  </g>
+
+  <!-- 10. PROJECT_DEADLINE -->
+  <g transform="translate(1090, 340)" filter="url(#shadow)">
+    <rect width="440" height="160" rx="10" fill="url(#card-workflow)" stroke="#fb923c" stroke-width="1.5"/>
+    <rect width="440" height="32" rx="10" fill="#9a3412"/>
+    <text x="12" y="21" fill="#ffffff" font-size="14" font-weight="700">PROJECT_DEADLINE</text>
+    <rect x="330" y="7" width="98" height="18" rx="4" fill="#ea580c"/>
+    <text x="379" y="20" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">HARD_CUTOFF</text>
+    
+    <text x="12" y="52" fill="#38bdf8" font-size="11" font-family="monospace">PK  id : UUID</text>
+    <text x="12" y="68" fill="#f8fafc" font-size="11" font-family="monospace">    deadline_type: SYNOPSIS|PPT|REPORT|GITHUB</text>
+    <text x="12" y="84" fill="#cbd5e1" font-size="11" font-family="monospace">    academic_year, project_type</text>
+    <text x="12" y="100" fill="#ef4444" font-size="11" font-weight="700" font-family="monospace">⏱️ due_date : DateTime (Enforced by S3 Upload)</text>
+    <text x="12" y="116" fill="#f43f5e" font-size="11" font-family="monospace">FK  set_by_id : UUID (HOD/Dean)</text>
+    <text x="12" y="132" fill="#cbd5e1" font-size="11" font-family="monospace">    remarks : Text</text>
+    <text x="12" y="148" fill="#64748b" font-size="11" font-family="monospace">    created_at, updated_at</text>
+  </g>
+
+  <!-- 11. NOTIFICATION -->
+  <g transform="translate(1250, 140)" filter="url(#shadow)">
+    <rect width="280" height="140" rx="10" fill="url(#card-auth)" stroke="#38bdf8" stroke-width="1.5"/>
+    <rect width="280" height="32" rx="10" fill="#0369a1"/>
+    <text x="12" y="21" fill="#ffffff" font-size="14" font-weight="700">NOTIFICATION</text>
+    <rect x="200" y="7" width="68" height="18" rx="4" fill="#0284c7"/>
+    <text x="234" y="20" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">REALTIME</text>
+    
+    <text x="12" y="52" fill="#38bdf8" font-size="11" font-family="monospace">PK  id : UUID</text>
+    <text x="12" y="68" fill="#f43f5e" font-size="11" font-family="monospace">FK  recipient_id : UUID</text>
+    <text x="12" y="84" fill="#f8fafc" font-size="11" font-family="monospace">    title, event_type, target_url</text>
+    <text x="12" y="100" fill="#cbd5e1" font-size="11" font-family="monospace">    message : Text</text>
+    <text x="12" y="116" fill="#cbd5e1" font-size="11" font-family="monospace">    is_read : Boolean (Default: false)</text>
+  </g>
+</svg>

@@ -1,0 +1,281 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1200" width="100%" height="100%" style="background:#0b0f19; font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
+  <defs>
+    <linearGradient id="bg-arch" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f19"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="client-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="edge-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#312e81"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="django-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="cloud-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c2d12"/>
+      <stop offset="100%" stop-color="#1c1917"/>
+    </linearGradient>
+    <linearGradient id="pg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+    <marker id="arr-blue" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#38bdf8" />
+    </marker>
+    <marker id="arr-orange" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#f97316" />
+    </marker>
+    <marker id="arr-green" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#10b981" />
+    </marker>
+  </defs>
+
+  <rect width="1600" height="1200" fill="url(#bg-arch)"/>
+  <g opacity="0.05" stroke="#ffffff" stroke-width="1">
+    <pattern id="grid-arch" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40"/>
+    </pattern>
+    <rect width="1600" height="1200" fill="url(#grid-arch)"/>
+  </g>
+
+  <!-- HEADER -->
+  <g transform="translate(60, 40)">
+    <text x="0" y="24" fill="#38bdf8" font-size="14" font-weight="700" letter-spacing="2">DEV BHOOMI UTTARAKHAND UNIVERSITY (DBUU)</text>
+    <text x="0" y="58" fill="#ffffff" font-size="28" font-weight="800">ARIS — Full-Stack Cloud System Architecture</text>
+    <text x="0" y="82" fill="#94a3b8" font-size="14">Next.js 14 App Router + Django REST Framework + PostgreSQL + Cloudinary Object Storage</text>
+  </g>
+
+  <!-- ================= 1. CLIENT LAYER ================= -->
+  <g transform="translate(60, 140)" filter="url(#shadow)">
+    <rect width="1480" height="170" rx="14" fill="url(#client-grad)" stroke="#6366f1" stroke-width="2"/>
+    <rect width="1480" height="34" rx="14" fill="#312e81"/>
+    <text x="20" y="23" fill="#ffffff" font-size="15" font-weight="700">1. CLIENT LAYER — Next.js 14 (App Router + TypeScript + Tailwind CSS + shadcn/ui)</text>
+    <rect x="1330" y="7" width="130" height="20" rx="4" fill="#4f46e5"/>
+    <text x="1395" y="21" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">VERCEL / NODE</text>
+
+    <g transform="translate(25, 50)">
+      <rect width="270" height="100" rx="8" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+      <text x="14" y="25" fill="#38bdf8" font-size="14" font-weight="700">🎓 Student Portal</text>
+      <text x="14" y="48" fill="#cbd5e1" font-size="11">• Group Formation (Max 3 Members)</text>
+      <text x="14" y="66" fill="#cbd5e1" font-size="11">• Supervisor / Idea Selection</text>
+      <text x="14" y="84" fill="#38bdf8" font-size="11" font-weight="600">• Cloudinary Upload (Synopsis/PPT/Report)</text>
+    </g>
+
+    <g transform="translate(315, 50)">
+      <rect width="270" height="100" rx="8" fill="#0f172a" stroke="#10b981" stroke-width="1.5"/>
+      <text x="14" y="25" fill="#10b981" font-size="14" font-weight="700">👨‍🏫 Supervisor Marketplace</text>
+      <text x="14" y="48" fill="#cbd5e1" font-size="11">• Post up to 10 Project Ideas</text>
+      <text x="14" y="66" fill="#cbd5e1" font-size="11">• Atomic Idea Thread-Locking</text>
+      <text x="14" y="84" fill="#cbd5e1" font-size="11">• Proposal Approve / Reject Feedback</text>
+    </g>
+
+    <g transform="translate(605, 50)">
+      <rect width="270" height="100" rx="8" fill="#0f172a" stroke="#fb923c" stroke-width="1.5"/>
+      <text x="14" y="25" fill="#fb923c" font-size="14" font-weight="700">🏛️ HOD Portal</text>
+      <text x="14" y="48" fill="#cbd5e1" font-size="11">• 1-by-1 Project Dossier Review</text>
+      <text x="14" y="66" fill="#cbd5e1" font-size="11">• View Uploaded Synopses / Reports</text>
+      <text x="14" y="84" fill="#cbd5e1" font-size="11">• Enforce / Extend Deadlines</text>
+    </g>
+
+    <g transform="translate(895, 50)">
+      <rect width="270" height="100" rx="8" fill="#0f172a" stroke="#c084fc" stroke-width="1.5"/>
+      <text x="14" y="25" fill="#c084fc" font-size="14" font-weight="700">📜 Dean Portal</text>
+      <text x="14" y="48" fill="#cbd5e1" font-size="11">• Consolidated School Overview</text>
+      <text x="14" y="66" fill="#cbd5e1" font-size="11">• Review HOD-Approved Queue</text>
+      <text x="14" y="84" fill="#cbd5e1" font-size="11">• Final University Sign-Off</text>
+    </g>
+
+    <g transform="translate(1185, 50)">
+      <rect width="270" height="100" rx="8" fill="#0f172a" stroke="#f43f5e" stroke-width="1.5"/>
+      <text x="14" y="25" fill="#f43f5e" font-size="14" font-weight="700">🔍 Public Project Archive</text>
+      <text x="14" y="48" fill="#cbd5e1" font-size="11">• Search by Year, Tech, Domain</text>
+      <text x="14" y="66" fill="#cbd5e1" font-size="11">• Filter Approved Projects</text>
+      <text x="14" y="84" fill="#cbd5e1" font-size="11">• View Approved Synopses &amp; Repos</text>
+    </g>
+  </g>
+
+  <!-- ================= 2. EDGE LAYER ================= -->
+  <g transform="translate(60, 350)" filter="url(#shadow)">
+    <rect width="1480" height="100" rx="14" fill="url(#edge-grad)" stroke="#818cf8" stroke-width="1.5"/>
+    <rect width="1480" height="28" rx="14" fill="#3730a3"/>
+    <text x="20" y="19" fill="#ffffff" font-size="13" font-weight="700">2. EDGE &amp; SECURITY LAYER — Middleware &amp; Reverse Proxy</text>
+
+    <g transform="translate(30, 40)">
+      <rect width="420" height="48" rx="6" fill="#0f172a" stroke="#818cf8" stroke-width="1"/>
+      <text x="16" y="22" fill="#a5b4fc" font-size="13" font-weight="700">Next.js Edge Middleware (`middleware.ts`)</text>
+      <text x="16" y="38" fill="#94a3b8" font-size="11">Decodes JWT Role &amp; protects `/student/*`, `/supervisor/*`, `/hod/*`, `/dean/*`</text>
+    </g>
+
+    <g transform="translate(520, 40)">
+      <rect width="440" height="48" rx="6" fill="#0f172a" stroke="#818cf8" stroke-width="1"/>
+      <text x="16" y="22" fill="#a5b4fc" font-size="13" font-weight="700">API Gateway / Nginx Reverse Proxy</text>
+      <text x="16" y="38" fill="#94a3b8" font-size="11">Handles SSL (HTTPS), CORS configuration, and route forwarding to Django API</text>
+    </g>
+
+    <g transform="translate(1020, 40)">
+      <rect width="430" height="48" rx="6" fill="#0f172a" stroke="#818cf8" stroke-width="1"/>
+      <text x="16" y="22" fill="#38bdf8" font-size="12" font-weight="700">🛡️ University ID Login + JWT Token Security</text>
+      <text x="16" y="38" fill="#94a3b8" font-size="11">ERP ID / Employee ID as login + Short-lived JWT Access + Refresh Tokens</text>
+    </g>
+  </g>
+
+  <!-- Connectors Client -> Edge -->
+  <path d="M 800 310 L 800 350" stroke="#38bdf8" stroke-width="2" fill="none" marker-end="url(#arr-blue)"/>
+  <path d="M 800 450 L 800 490" stroke="#38bdf8" stroke-width="2" fill="none" marker-end="url(#arr-blue)"/>
+
+  <!-- ================= 3. BACKEND LAYER ================= -->
+  <g transform="translate(60, 490)" filter="url(#shadow)">
+    <rect width="1480" height="230" rx="14" fill="url(#django-grad)" stroke="#10b981" stroke-width="2"/>
+    <rect width="1480" height="34" rx="14" fill="#065f46"/>
+    <text x="20" y="23" fill="#ffffff" font-size="15" font-weight="700">3. BACKEND APPLICATION LAYER — Django 6.1 + Django REST Framework</text>
+    <rect x="1330" y="7" width="130" height="20" rx="4" fill="#059669"/>
+    <text x="1395" y="21" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">PYTHON 3.13</text>
+
+    <g transform="translate(25, 50)">
+      <rect width="270" height="160" rx="8" fill="#0f172a" stroke="#10b981" stroke-width="1"/>
+      <text x="14" y="24" fill="#34d399" font-size="13" font-weight="700">core &amp; accounts app</text>
+      <text x="14" y="46" fill="#cbd5e1" font-size="11">• CustomUser (AbstractUser + Roles)</text>
+      <text x="14" y="64" fill="#cbd5e1" font-size="11">• University ID Login (ERP/Employee)</text>
+      <text x="14" y="82" fill="#cbd5e1" font-size="11">• SupervisorProfile &amp; StudentProfile</text>
+      <text x="14" y="100" fill="#cbd5e1" font-size="11">• RBAC Custom DRF Permissions</text>
+      <text x="14" y="118" fill="#cbd5e1" font-size="11">• JWT Token Obtain &amp; Refresh</text>
+      <text x="14" y="140" fill="#6ee7b7" font-size="10" font-family="monospace">/api/auth/ | /api/accounts/</text>
+    </g>
+
+    <g transform="translate(315, 50)">
+      <rect width="270" height="160" rx="8" fill="#0f172a" stroke="#10b981" stroke-width="1"/>
+      <text x="14" y="24" fill="#34d399" font-size="13" font-weight="700">projects app</text>
+      <text x="14" y="46" fill="#cbd5e1" font-size="11">• StudentGroup &amp; GroupMember</text>
+      <text x="14" y="64" fill="#ef4444" font-size="11" font-weight="700">• ProjectIdea with select_for_update()</text>
+      <text x="14" y="82" fill="#cbd5e1" font-size="11">• ProjectProposal (Versioned)</text>
+      <text x="14" y="100" fill="#cbd5e1" font-size="11">• Supervisor Capacity Checks</text>
+      <text x="14" y="118" fill="#cbd5e1" font-size="11">• Group State Transitions</text>
+      <text x="14" y="140" fill="#6ee7b7" font-size="10" font-family="monospace">/api/groups/ | /api/ideas/</text>
+    </g>
+
+    <g transform="translate(605, 50)">
+      <rect width="270" height="160" rx="8" fill="#0f172a" stroke="#f472b6" stroke-width="1.5"/>
+      <text x="14" y="24" fill="#f472b6" font-size="13" font-weight="700">submissions app (Cloudinary)</text>
+      <text x="14" y="46" fill="#fbcfe8" font-size="11">• Cloudinary SDK Upload Handler</text>
+      <text x="14" y="64" fill="#cbd5e1" font-size="11">• Submission Confirmation &amp; Audit</text>
+      <text x="14" y="82" fill="#cbd5e1" font-size="11">• ProjectSubmission Metadata Record</text>
+      <text x="14" y="100" fill="#cbd5e1" font-size="11">• Secure Cloudinary URLs for Review</text>
+      <text x="14" y="118" fill="#ef4444" font-size="11">• Deadline Cutoff Validation</text>
+      <text x="14" y="140" fill="#f472b6" font-size="10" font-family="monospace">/api/submissions/</text>
+    </g>
+
+    <g transform="translate(895, 50)">
+      <rect width="270" height="160" rx="8" fill="#0f172a" stroke="#10b981" stroke-width="1"/>
+      <text x="14" y="24" fill="#34d399" font-size="13" font-weight="700">approvals &amp; deadlines app</text>
+      <text x="14" y="46" fill="#cbd5e1" font-size="11">• HOD &amp; Dean Workflow Engines</text>
+      <text x="14" y="64" fill="#cbd5e1" font-size="11">• ApprovalRecord Append-Only Log</text>
+      <text x="14" y="82" fill="#cbd5e1" font-size="11">• ProjectDeadline Cutoff Rules</text>
+      <text x="14" y="100" fill="#cbd5e1" font-size="11">• Deadline Extension Logic</text>
+      <text x="14" y="118" fill="#cbd5e1" font-size="11">• Stage Progressions</text>
+      <text x="14" y="140" fill="#6ee7b7" font-size="10" font-family="monospace">/api/approvals/ | /api/deadlines/</text>
+    </g>
+
+    <g transform="translate(1185, 50)">
+      <rect width="270" height="160" rx="8" fill="#0f172a" stroke="#10b981" stroke-width="1"/>
+      <text x="14" y="24" fill="#34d399" font-size="13" font-weight="700">notifications &amp; search app</text>
+      <text x="14" y="46" fill="#cbd5e1" font-size="11">• In-App Real-time Alerts</text>
+      <text x="14" y="64" fill="#cbd5e1" font-size="11">• Django Signals for Triggers</text>
+      <text x="14" y="82" fill="#cbd5e1" font-size="11">• PostgreSQL Full-Text Search</text>
+      <text x="14" y="100" fill="#cbd5e1" font-size="11">• GIN Indexed Tech/Domain Queries</text>
+      <text x="14" y="118" fill="#cbd5e1" font-size="11">• Public Filter Endpoint</text>
+      <text x="14" y="140" fill="#6ee7b7" font-size="10" font-family="monospace">/api/notifications/ | /api/search/</text>
+    </g>
+  </g>
+
+  <!-- ================= 4. DATA & STORAGE LAYER ================= -->
+  <!-- PostgreSQL -->
+  <g transform="translate(60, 770)" filter="url(#shadow)">
+    <rect width="700" height="380" rx="14" fill="url(#pg-grad)" stroke="#3b82f6" stroke-width="2"/>
+    <rect width="700" height="34" rx="14" fill="#1e3a8a"/>
+    <text x="20" y="23" fill="#ffffff" font-size="15" font-weight="700">4A. RELATIONAL DATABASE — PostgreSQL 17</text>
+    <rect x="580" y="7" width="105" height="20" rx="4" fill="#2563eb"/>
+    <text x="632" y="21" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">PRIMARY DB</text>
+
+    <g transform="translate(25, 55)">
+      <rect width="310" height="140" rx="8" fill="#0f172a" stroke="#3b82f6" stroke-width="1"/>
+      <text x="14" y="22" fill="#60a5fa" font-size="13" font-weight="700">Structured Relational Tables</text>
+      <text x="14" y="44" fill="#cbd5e1" font-size="11">• `users` (B-Tree on University ID)</text>
+      <text x="14" y="62" fill="#cbd5e1" font-size="11">• `supervisor_profiles`, `student_profiles`</text>
+      <text x="14" y="80" fill="#cbd5e1" font-size="11">• `student_groups`, `group_members`</text>
+      <text x="14" y="98" fill="#cbd5e1" font-size="11">• `project_deadlines`, `approval_records`</text>
+      <text x="14" y="116" fill="#cbd5e1" font-size="11">• `notifications` (Composite index on user)</text>
+    </g>
+
+    <g transform="translate(360, 55)">
+      <rect width="310" height="140" rx="8" fill="#0f172a" stroke="#3b82f6" stroke-width="1"/>
+      <text x="14" y="22" fill="#60a5fa" font-size="13" font-weight="700">JSONB &amp; GIN Search Optimization</text>
+      <text x="14" y="44" fill="#cbd5e1" font-size="11">• `expertise_domains` (GIN index)</text>
+      <text x="14" y="62" fill="#cbd5e1" font-size="11">• `expertise_technologies` (GIN index)</text>
+      <text x="14" y="80" fill="#cbd5e1" font-size="11">• `project_ideas.technologies`</text>
+      <text x="14" y="98" fill="#cbd5e1" font-size="11">• Enables sub-millisecond keyword</text>
+      <text x="14" y="116" fill="#cbd5e1" font-size="11">   and tech array filtering</text>
+    </g>
+
+    <g transform="translate(25, 215)">
+      <rect width="645" height="135" rx="8" fill="#0f172a" stroke="#3b82f6" stroke-width="1"/>
+      <text x="14" y="22" fill="#60a5fa" font-size="13" font-weight="700">Transactional Concurrency Controls</text>
+      <text x="14" y="44" fill="#ef4444" font-size="11" font-weight="700">• Row-Level Locking (`select_for_update`) during Idea Selection</text>
+      <text x="14" y="64" fill="#cbd5e1" font-size="11">• Foreign Key Cascade Protections on critical audit trails</text>
+      <text x="14" y="84" fill="#cbd5e1" font-size="11">• Append-only integrity: `approval_records` cannot be updated or deleted</text>
+      <text x="14" y="104" fill="#38bdf8" font-size="11">• Stores Cloudinary URLs only — zero document binaries in PostgreSQL!</text>
+    </g>
+  </g>
+
+  <!-- Cloudinary Object Storage -->
+  <g transform="translate(840, 770)" filter="url(#shadow)">
+    <rect width="700" height="380" rx="14" fill="url(#cloud-grad)" stroke="#f97316" stroke-width="2"/>
+    <rect width="700" height="34" rx="14" fill="#7c2d12"/>
+    <text x="20" y="23" fill="#ffffff" font-size="15" font-weight="700">4B. CLOUD OBJECT STORAGE — Cloudinary (Free Tier: 25 GB / Unlimited)</text>
+    <rect x="560" y="7" width="125" height="20" rx="4" fill="#ea580c"/>
+    <text x="622" y="21" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">CLOUDINARY CDN</text>
+
+    <g transform="translate(25, 55)">
+      <rect width="310" height="150" rx="8" fill="#0f172a" stroke="#f97316" stroke-width="1"/>
+      <text x="14" y="22" fill="#fb923c" font-size="13" font-weight="700">Storage Directory Structure</text>
+      <text x="14" y="44" fill="#fdba74" font-size="10" font-family="monospace">cloudinary://aris-storage/</text>
+      <text x="14" y="62" fill="#cbd5e1" font-size="10" font-family="monospace">├── avatars/{user_uuid}.jpg</text>
+      <text x="14" y="80" fill="#cbd5e1" font-size="10" font-family="monospace">└── submissions/{year}/{type}/</text>
+      <text x="28" y="98" fill="#cbd5e1" font-size="10" font-family="monospace">└── group_{id}/</text>
+      <text x="42" y="116" fill="#cbd5e1" font-size="10" font-family="monospace">├── synopsis_v1.pdf</text>
+      <text x="42" y="132" fill="#cbd5e1" font-size="10" font-family="monospace">├── presentation.pptx</text>
+      <text x="42" y="148" fill="#cbd5e1" font-size="10" font-family="monospace">└── final_report.pdf</text>
+    </g>
+
+    <g transform="translate(360, 55)">
+      <rect width="310" height="150" rx="8" fill="#0f172a" stroke="#f97316" stroke-width="1"/>
+      <text x="14" y="22" fill="#fb923c" font-size="13" font-weight="700">Why Cloudinary over AWS S3?</text>
+      <text x="14" y="42" fill="#10b981" font-size="11" font-weight="700">✅ No credit card required</text>
+      <text x="14" y="60" fill="#10b981" font-size="11" font-weight="700">✅ 25 GB free storage (forever)</text>
+      <text x="14" y="78" fill="#cbd5e1" font-size="11">• Built-in CDN for fast delivery</text>
+      <text x="14" y="96" fill="#cbd5e1" font-size="11">• Auto image/video optimization</text>
+      <text x="14" y="114" fill="#cbd5e1" font-size="11">• Django SDK integration (3 lines)</text>
+      <text x="14" y="132" fill="#cbd5e1" font-size="11">• Seamless django-cloudinary-storage</text>
+    </g>
+
+    <g transform="translate(25, 225)">
+      <rect width="645" height="125" rx="8" fill="#0f172a" stroke="#f97316" stroke-width="1"/>
+      <text x="14" y="22" fill="#fb923c" font-size="13" font-weight="700">Security &amp; Upload Flow</text>
+      <text x="14" y="44" fill="#cbd5e1" font-size="11">• Django handles uploads via Cloudinary SDK (no direct browser-to-cloud)</text>
+      <text x="14" y="64" fill="#cbd5e1" font-size="11">• Secure signed URLs for authorized file access by reviewers</text>
+      <text x="14" y="84" fill="#cbd5e1" font-size="11">• API Key + Secret stored in server .env (never exposed to frontend)</text>
+      <text x="14" y="104" fill="#34d399" font-size="11">• Switching to AWS S3 later requires changing only 2 lines in settings.py</text>
+    </g>
+  </g>
+
+  <!-- Connectors Django -> PostgreSQL and Django -> Cloudinary -->
+  <path d="M 400 720 L 400 770" stroke="#3b82f6" stroke-width="2" fill="none" marker-end="url(#arr-blue)"/>
+  <path d="M 1180 720 L 1180 770" stroke="#f97316" stroke-width="2" fill="none" marker-end="url(#arr-orange)"/>
+</svg>
