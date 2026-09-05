@@ -1,14 +1,19 @@
+from django.db import models, transaction
+from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from core.permissions import IsHOD, IsDean
 from projects.models import StudentGroup
+from accounts.models import SupervisorProfile
 from .models import ApprovalRecord
 from .serializers import (
     ApprovalRecordSerializer,
     ProjectDossierSerializer,
     ApprovalActionSerializer,
+    FacultyApprovalDossierSerializer,
+    FacultyApprovalActionSerializer,
 )
 
 
@@ -169,3 +174,82 @@ class ProjectArchiveListView(generics.ListAPIView):
             )
 
         return queryset.distinct().order_by('-updated_at')
+
+
+class HODFacultyApprovalListView(generics.ListAPIView):
+    """
+    GET /api/approvals/faculty/
+    Lists all faculty supervisor applications for the logged-in HOD's department.
+    Supports query filter:
+      - ?status=PENDING (default)
+      - ?status=all
+      - ?status=APPROVED
+      - ?status=REJECTED
+    """
+    permission_classes = [IsHOD]
+    serializer_class   = FacultyApprovalDossierSerializer
+
+    def get_queryset(self):
+        hod_dept = self.request.user.department
+        queryset = SupervisorProfile.objects.select_related('user', 'approved_by').all()
+
+        if hod_dept:
+            queryset = queryset.filter(
+                models.Q(department__icontains=hod_dept) |
+                models.Q(department__iexact=hod_dept)
+            )
+
+        status_filter = self.request.query_params.get('status', 'PENDING')
+        if status_filter != 'all':
+            queryset = queryset.filter(approval_status=status_filter.upper())
+
+        return queryset.order_by('-created_at')
+
+
+class HODFacultyApprovalActionView(generics.GenericAPIView):
+    """
+    POST /api/approvals/faculty/<int:supervisor_id>/action/
+    Allows HOD to APPROVE or REJECT a faculty supervisor's registration.
+    """
+    permission_classes = [IsHOD]
+    serializer_class   = FacultyApprovalActionSerializer
+
+    def post(self, request, supervisor_id, *args, **kwargs):
+        try:
+            supervisor = SupervisorProfile.objects.select_related('user').get(id=supervisor_id)
+        except SupervisorProfile.DoesNotExist:
+            raise NotFound("Supervisor application not found.")
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        action = serializer.validated_data['action']
+        reason = serializer.validated_data.get('reason', '').strip()
+
+        with transaction.atomic():
+            if action == 'APPROVE':
+                supervisor.approval_status = SupervisorProfile.ApprovalStatus.APPROVED
+                supervisor.approved_by = request.user
+                supervisor.approved_at = timezone.now()
+                supervisor.rejection_reason = ''
+                supervisor.save(update_fields=['approval_status', 'approved_by', 'approved_at', 'rejection_reason'])
+
+                # Activate user login credentials
+                user = supervisor.user
+                user.is_active = True
+                user.save(update_fields=['is_active'])
+
+            elif action == 'REJECT':
+                supervisor.approval_status = SupervisorProfile.ApprovalStatus.REJECTED
+                supervisor.rejection_reason = reason or 'Declined by Head of Department.'
+                supervisor.save(update_fields=['approval_status', 'rejection_reason'])
+
+                # Deactivate user login credentials
+                user = supervisor.user
+                user.is_active = False
+                user.save(update_fields=['is_active'])
+
+        return Response(
+            FacultyApprovalDossierSerializer(supervisor).data,
+            status=status.HTTP_200_OK
+        )

@@ -8,6 +8,8 @@ from .views import (
     ProjectIdeaListCreateView,
     ProjectProposalCreateView,
     ProjectProposalReviewView,
+    ProjectSessionListCreateView,
+    SessionAttendanceListCreateView,
 )
 
 urlpatterns = [
@@ -26,4 +28,8 @@ urlpatterns = [
     # Proposals
     path('proposals/', ProjectProposalCreateView.as_view(), name='proposal-create'),
     path('proposals/<uuid:pk>/review/', ProjectProposalReviewView.as_view(), name='proposal-review'),
+
+    # Coordinator Sessions & Attendance
+    path('sessions/', ProjectSessionListCreateView.as_view(), name='session-list-create'),
+    path('sessions/<uuid:session_id>/attendance/', SessionAttendanceListCreateView.as_view(), name='session-attendance'),
 ]

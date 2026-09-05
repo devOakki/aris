@@ -26,6 +26,14 @@ class ProjectTrack(models.Model):
     required_deliverables = models.JSONField(default=list)
     min_media_files       = models.PositiveSmallIntegerField(default=5)
     max_media_files       = models.PositiveSmallIntegerField(default=10)
+    coordinator           = models.ForeignKey(
+        SupervisorProfile,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='coordinated_tracks',
+        help_text="Faculty member assigned by HOD to coordinate track lab sessions & presentations."
+    )
     created_by            = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -192,3 +200,63 @@ class ProjectDeadline(models.Model):
 
     def __str__(self):
         return f"{self.track.title} — {self.deadline_type} ({self.due_date:%d %b %Y})"
+
+
+class ProjectSession(models.Model):
+    class SessionType(models.TextChoices):
+        WEEKLY_LAB   = 'WEEKLY_LAB',   'Weekly Progress Lab'
+        SYNOPSIS_PPT = 'SYNOPSIS_PPT', 'Synopsis Physical Presentation'
+        MID_TERM_PPT = 'MID_TERM_PPT', 'Mid-Term Progress Review'
+        FINAL_PPT    = 'FINAL_PPT',    'Final Classroom PPT Presentation'
+        DOUBT_SOLVE  = 'DOUBT_SOLVE',  'Guidance & Doubt Session'
+
+    id             = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    track          = models.ForeignKey(ProjectTrack, on_delete=models.CASCADE, related_name='sessions')
+    title          = models.CharField(max_length=150)
+    session_type   = models.CharField(max_length=20, choices=SessionType.choices, default=SessionType.WEEKLY_LAB)
+    target_section = models.CharField(max_length=5, blank=True, default='ALL', help_text="e.g. A, B, C or ALL")
+    scheduled_date = models.DateField()
+    start_time     = models.TimeField()
+    end_time       = models.TimeField()
+    venue          = models.CharField(max_length=100, help_text="e.g. Lab 3, Ground Floor CSE Block, Room 204")
+    description    = models.TextField(blank=True, default='')
+    coordinator    = models.ForeignKey(
+        SupervisorProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='scheduled_sessions'
+    )
+    is_completed   = models.BooleanField(default=False)
+    created_at     = models.DateTimeField(auto_now_add=True)
+    updated_at     = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'project_sessions'
+        ordering = ['scheduled_date', 'start_time']
+
+    def __str__(self):
+        return f"{self.title} ({self.scheduled_date}) - {self.track.title}"
+
+
+class SessionAttendance(models.Model):
+    class AttendanceStatus(models.TextChoices):
+        PRESENT = 'PRESENT', 'Present'
+        ABSENT  = 'ABSENT',  'Absent'
+        LATE    = 'LATE',    'Late'
+
+    id             = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    session        = models.ForeignKey(ProjectSession, on_delete=models.CASCADE, related_name='attendances')
+    group          = models.ForeignKey(StudentGroup, on_delete=models.CASCADE, related_name='session_attendances')
+    status         = models.CharField(max_length=10, choices=AttendanceStatus.choices, default=AttendanceStatus.PRESENT)
+    progress_notes = models.TextField(blank=True, default='', help_text="Coordinator feedback from classroom presentation")
+    marked_by      = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    marked_at      = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'session_attendances'
+        unique_together = ('session', 'group')
+
+    def __str__(self):
+        return f"{self.group.name} - {self.session.title} [{self.status}]"
+

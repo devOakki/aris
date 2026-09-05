@@ -6,12 +6,14 @@ from .models import (
     ProjectIdea,
     ProjectProposal,
     ProjectDeadline,
+    ProjectSession,
+    SessionAttendance,
 )
 
 
 @admin.register(ProjectTrack)
 class ProjectTrackAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'session', 'department', 'target_program', 'target_semester', 'is_mandatory', 'is_active')
+    list_display = ('title', 'category', 'session', 'department', 'coordinator', 'target_program', 'target_semester', 'is_mandatory', 'is_active')
     list_filter = ('category', 'department', 'target_program', 'target_semester', 'is_mandatory', 'is_active')
     search_fields = ('title', 'department')
 
@@ -49,3 +51,18 @@ class ProjectDeadlineAdmin(admin.ModelAdmin):
     list_display = ('track', 'deadline_type', 'title', 'due_date', 'set_by')
     list_filter = ('deadline_type', 'track')
     search_fields = ('title', 'track__title')
+
+
+@admin.register(ProjectSession)
+class ProjectSessionAdmin(admin.ModelAdmin):
+    list_display = ('title', 'track', 'session_type', 'target_section', 'scheduled_date', 'start_time', 'venue', 'coordinator', 'is_completed')
+    list_filter = ('session_type', 'target_section', 'is_completed', 'track')
+    search_fields = ('title', 'venue', 'track__title')
+
+
+@admin.register(SessionAttendance)
+class SessionAttendanceAdmin(admin.ModelAdmin):
+    list_display = ('session', 'group', 'status', 'marked_by', 'marked_at')
+    list_filter = ('status', 'session__session_type')
+    search_fields = ('group__name', 'session__title')
+

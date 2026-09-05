@@ -9,6 +9,8 @@ from .models import (
     GroupMember,
     ProjectIdea,
     ProjectProposal,
+    ProjectSession,
+    SessionAttendance,
 )
 from .serializers import (
     ProjectTrackSerializer,
@@ -18,6 +20,8 @@ from .serializers import (
     ProjectProposalSerializer,
     ProjectProposalCreateSerializer,
     ProjectProposalReviewSerializer,
+    ProjectSessionSerializer,
+    SessionAttendanceSerializer,
 )
 
 
@@ -211,3 +215,62 @@ class ProjectProposalReviewView(generics.GenericAPIView):
         updated_proposal = serializer.update(proposal, serializer.validated_data)
 
         return Response(ProjectProposalSerializer(updated_proposal).data, status=status.HTTP_200_OK)
+
+
+class ProjectSessionListCreateView(generics.ListCreateAPIView):
+    """
+    GET /api/projects/sessions/
+    Lists scheduled lab sessions & physical presentations.
+    Supports query parameters:
+      - ?track_id=<uuid>
+      - ?section=A
+
+    POST /api/projects/sessions/
+    Allows Track Coordinator (or HOD) to schedule a physical session/presentation date, time, and venue.
+    """
+    serializer_class = ProjectSessionSerializer
+
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [IsSupervisor()]
+        return [IsAuthenticated()]
+
+    def get_queryset(self):
+        queryset = ProjectSession.objects.select_related('track', 'coordinator__user')
+
+        track_id = self.request.query_params.get('track_id')
+        if track_id:
+            queryset = queryset.filter(track_id=track_id)
+
+        section = self.request.query_params.get('section')
+        if section:
+            queryset = queryset.filter(target_section__in=[section, 'ALL'])
+
+        return queryset.order_by('scheduled_date', 'start_time')
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        coordinator_profile = getattr(user, 'supervisor_profile', None)
+        serializer.save(coordinator=coordinator_profile)
+
+
+class SessionAttendanceListCreateView(generics.ListCreateAPIView):
+    """
+    GET /api/projects/sessions/<uuid:session_id>/attendance/
+    Returns attendance records for that session.
+
+    POST /api/projects/sessions/<uuid:session_id>/attendance/
+    Allows Coordinator to mark group-wise physical attendance (PRESENT/ABSENT/LATE) and enter progress notes.
+    """
+    serializer_class = SessionAttendanceSerializer
+    permission_classes = [IsSupervisor]
+
+    def get_queryset(self):
+        session_id = self.kwargs['session_id']
+        return SessionAttendance.objects.filter(session_id=session_id).select_related('group', 'marked_by')
+
+    def perform_create(self, serializer):
+        session_id = self.kwargs['session_id']
+        session = ProjectSession.objects.get(id=session_id)
+        serializer.save(session=session, marked_by=self.request.user)
+

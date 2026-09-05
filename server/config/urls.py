@@ -18,7 +18,8 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # Admin panel moved to non-guessable URL (OWASP A05 — Security Misconfiguration)
+    path('aris-internal-mgmt/', admin.site.urls),
     path('api/auth/', include('core.urls')),
     path('api/accounts/', include('accounts.urls')),
     path('api/projects/', include('projects.urls')),

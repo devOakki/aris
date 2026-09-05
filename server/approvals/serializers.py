@@ -3,10 +3,10 @@ from django.db import transaction
 from django.utils import timezone
 from .models import ApprovalRecord
 from projects.models import StudentGroup, ProjectProposal
-from submissions.models import ProjectSubmission
 from projects.serializers import GroupMemberSummarySerializer, ProjectProposalSerializer
 from submissions.serializers import ProjectSubmissionSerializer
 from notifications.models import Notification
+from accounts.models import SupervisorProfile
 
 
 class ApprovalRecordSerializer(serializers.ModelSerializer):
@@ -151,3 +151,40 @@ class ApprovalActionSerializer(serializers.Serializer):
                 )
 
             return record
+
+
+class FacultyApprovalDossierSerializer(serializers.ModelSerializer):
+    university_id    = serializers.CharField(source='user.university_id', read_only=True)
+    full_name        = serializers.CharField(source='user.get_full_name', read_only=True)
+    email            = serializers.EmailField(source='user.email', read_only=True)
+    phone            = serializers.CharField(source='user.phone', read_only=True)
+    avatar_url       = serializers.CharField(source='user.avatar_url', read_only=True)
+    is_active        = serializers.BooleanField(source='user.is_active', read_only=True)
+    approved_by_name = serializers.CharField(source='approved_by.get_full_name', read_only=True, default='')
+
+    class Meta:
+        model = SupervisorProfile
+        fields = (
+            'id',
+            'university_id',
+            'full_name',
+            'email',
+            'phone',
+            'avatar_url',
+            'designation',
+            'department',
+            'max_groups',
+            'expertise_domains',
+            'expertise_tech',
+            'approval_status',
+            'rejection_reason',
+            'approved_by_name',
+            'approved_at',
+            'is_active',
+            'created_at',
+        )
+
+
+class FacultyApprovalActionSerializer(serializers.Serializer):
+    action = serializers.ChoiceField(choices=['APPROVE', 'REJECT'])
+    reason = serializers.CharField(required=False, allow_blank=True, default='')

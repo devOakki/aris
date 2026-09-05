@@ -2,7 +2,7 @@ import os
 import cloudinary.uploader
 from rest_framework import generics, status
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.utils import timezone
@@ -222,3 +222,45 @@ class FileUploadView(generics.GenericAPIView):
                     response_data['submission'] = ProjectSubmissionSerializer(submission).data
 
         return Response(response_data, status=status.HTTP_201_CREATED)
+
+
+class RegistrationPortraitUploadView(generics.GenericAPIView):
+    """
+    POST /api/submissions/upload-portrait/
+    Allows pre-registration portrait upload directly to Cloudinary so portraits
+    can be linked to the user record upon initial registration.
+    Rate limited to 5/minute per IP to prevent storage abuse.
+    """
+    permission_classes = [AllowAny]
+    parser_classes     = [MultiPartParser, FormParser]
+
+    # Import here to avoid circular imports
+    def get_throttles(self):
+        from core.throttles import PortraitUploadRateThrottle
+        return [PortraitUploadRateThrottle()]
+
+    def post(self, request, *args, **kwargs):
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            raise ValidationError({'file': 'No image file was provided.'})
+
+        _, ext = os.path.splitext(file_obj.name)
+        ext = ext.lower()
+        if ext not in ['.jpg', '.jpeg', '.png', '.webp']:
+            raise ValidationError({'file': 'Invalid format. Only JPG, PNG, and WebP are allowed.'})
+
+        if file_obj.size > 5 * 1024 * 1024:
+            raise ValidationError({'file': 'Portrait exceeds 5MB limit.'})
+
+        try:
+            upload_result = cloudinary.uploader.upload(
+                file_obj,
+                folder='aris/portraits',
+                resource_type='image',
+                use_filename=True,
+                unique_filename=True
+            )
+            secure_url = upload_result.get('secure_url')
+            return Response({'secure_url': secure_url}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'detail': f'Portrait upload failed: {str(e)}'}, status=status.HTTP_502_BAD_GATEWAY)

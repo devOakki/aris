@@ -9,6 +9,8 @@ from .models import (
     ProjectIdea,
     ProjectProposal,
     ProjectDeadline,
+    ProjectSession,
+    SessionAttendance,
 )
 from accounts.models import StudentProfile, SupervisorProfile
 
@@ -32,9 +34,10 @@ class ProjectDeadlineSerializer(serializers.ModelSerializer):
 
 
 class ProjectTrackSerializer(serializers.ModelSerializer):
-    deadlines    = ProjectDeadlineSerializer(many=True, read_only=True)
-    session_year = serializers.CharField(source='session.year', read_only=True)
-    session_term = serializers.CharField(source='session.term', read_only=True)
+    deadlines        = ProjectDeadlineSerializer(many=True, read_only=True)
+    session_year     = serializers.CharField(source='session.year', read_only=True)
+    session_term     = serializers.CharField(source='session.term', read_only=True)
+    coordinator_name = serializers.CharField(source='coordinator.user.get_full_name', read_only=True)
 
     class Meta:
         model = ProjectTrack
@@ -48,6 +51,8 @@ class ProjectTrackSerializer(serializers.ModelSerializer):
             'department',
             'target_program',
             'target_semester',
+            'coordinator',
+            'coordinator_name',
             'is_mandatory',
             'max_group_size',
             'required_deliverables',
@@ -357,4 +362,51 @@ class ProjectProposalReviewSerializer(serializers.Serializer):
             group.save()
 
         return proposal
+
+
+class ProjectSessionSerializer(serializers.ModelSerializer):
+    coordinator_name = serializers.CharField(source='coordinator.user.get_full_name', read_only=True)
+    track_title      = serializers.CharField(source='track.title', read_only=True)
+
+    class Meta:
+        model = ProjectSession
+        fields = (
+            'id',
+            'track',
+            'track_title',
+            'title',
+            'session_type',
+            'target_section',
+            'scheduled_date',
+            'start_time',
+            'end_time',
+            'venue',
+            'description',
+            'coordinator',
+            'coordinator_name',
+            'is_completed',
+            'created_at',
+        )
+
+
+class SessionAttendanceSerializer(serializers.ModelSerializer):
+    group_name     = serializers.CharField(source='group.name', read_only=True)
+    session_title  = serializers.CharField(source='session.title', read_only=True)
+    marked_by_name = serializers.CharField(source='marked_by.get_full_name', read_only=True)
+
+    class Meta:
+        model = SessionAttendance
+        fields = (
+            'id',
+            'session',
+            'session_title',
+            'group',
+            'group_name',
+            'status',
+            'progress_notes',
+            'marked_by',
+            'marked_by_name',
+            'marked_at',
+        )
+
 
