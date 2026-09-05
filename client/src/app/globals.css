@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   ARIS DBUU Official Design System Tokens (docs/DESIGN_SYSTEM.md)
+   ========================================================================== */
+
+@theme {
+  /* 1. Core Brand Colors */
+  --color-dbuu-navy: #0F2137;
+  --color-dbuu-navy-dark: #0B192C;
+  --color-dbuu-navy-light: #1A2B4C;
+
+  --color-dbuu-gold: #F5A623;
+  --color-dbuu-gold-light: #FBBF24;
+  --color-dbuu-gold-dark: #D97706;
+
+  --color-dbuu-red: #B81D24;
+  --color-dbuu-red-light: #DC2626;
+  --color-dbuu-red-dark: #991B1B;
+
+  --color-dbuu-orange: #F36E21;
+  --color-dbuu-orange-light: #FB923C;
+  --color-dbuu-orange-dark: #C2410C;
+
+  --color-dbuu-royal: #1A4DBE;
+  --color-dbuu-royal-light: #3B82F6;
+  --color-dbuu-royal-dark: #1E3A8A;
+
+  --color-dbuu-plum: #4A154B;
+  --color-dbuu-plum-light: #7E1935;
+  --color-dbuu-plum-dark: #2A0845;
+
+  /* 2. Institutional Surfaces */
+  --color-surface-bg: #0B0F19;
+  --color-surface-card: #111827;
+  --color-surface-border: #1F2937;
+  --color-surface-hover: #1E293B;
+
+  /* 3. Typography */
+  --font-sans: var(--font-jakarta), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-mono), monospace;
+}
+
+:root {
+  /* CSS Variables */
+  --dbuu-navy: #0F2137;
+  --dbuu-gold: #F5A623;
+  --dbuu-red: #B81D24;
+  --dbuu-orange: #F36E21;
+  --dbuu-royal: #1A4DBE;
+  --dbuu-plum: #4A154B;
+
+  /* Signature Gradients */
+  --grad-hero: linear-gradient(135deg, #0F2137 0%, #1A2B4C 50%, #4A154B 100%);
+  --grad-plum-crimson: linear-gradient(135deg, #3B1B48 0%, #7E1935 50%, #B81D24 100%);
+  --grad-gold-orange: linear-gradient(135deg, #F5A623 0%, #F36E21 100%);
+  --grad-royal-cobalt: linear-gradient(135deg, #1A4DBE 0%, #2563EB 100%);
+  --grad-surface: linear-gradient(180deg, rgba(15, 33, 55, 0.85) 0%, rgba(11, 15, 25, 0.95) 100%);
+}
+
+/* Reusable Gradient Utilities */
+.bg-grad-hero {
+  background: var(--grad-hero);
+}
+
+.bg-grad-gold-orange {
+  background: var(--grad-gold-orange);
+}
+
+.bg-grad-royal-cobalt {
+  background: var(--grad-royal-cobalt);
+}
+
+.bg-grad-plum-crimson {
+  background: var(--grad-plum-crimson);
+}
+
+.bg-grad-surface {
+  background: var(--grad-surface);
+}
+
+/* Global Body Styling */
+body {
+  background-color: #f8fafc;
+  color: #0f172a;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Chrome & Edge Autofill Blue Background Suppression */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #f8fafc inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
