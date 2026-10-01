@@ -91,3 +91,22 @@ class SupervisorProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.get_full_name()} — {self.designation}"
+
+
+class EmailOTPVerification(models.Model):
+    email        = models.EmailField()
+    otp_code     = models.CharField(max_length=6)
+    expires_at   = models.DateTimeField()
+    attempts     = models.PositiveSmallIntegerField(default=0)
+    is_verified  = models.BooleanField(default=False)
+    created_at   = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'email_otp_verifications'
+        indexes = [
+            models.Index(fields=['email', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"OTP for {self.email} - {'Verified' if self.is_verified else 'Pending'}"
+

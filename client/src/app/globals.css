@@ -37,7 +37,7 @@
   --color-surface-hover: #1E293B;
 
   /* 3. Typography */
-  --font-sans: var(--font-jakarta), system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-poppins), system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-mono), monospace;
 }
 

@@ -205,14 +205,31 @@ SECURE_HSTS_PRELOAD = True
 
 
 
-# Email
-# https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
+# Email Configuration
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ['true', '1', 'yes']
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() in ['true', '1', 'yes']
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', 15))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '').strip()
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '').strip()
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+# Dynamic Default From Header
+configured_from = os.getenv('DEFAULT_FROM_EMAIL', '')
+if configured_from:
+    DEFAULT_FROM_EMAIL = configured_from
+elif EMAIL_HOST_USER:
+    DEFAULT_FROM_EMAIL = f'Dev Bhoomi Uttarakhand University <{EMAIL_HOST_USER}>'
+else:
+    DEFAULT_FROM_EMAIL = 'Dev Bhoomi Uttarakhand University <noreply@dbuu.ac.in>'
+
+env_backend = os.getenv('EMAIL_BACKEND')
+if env_backend:
+    EMAIL_BACKEND = env_backend
+elif EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Cloudinary Configuration
 CLOUDINARY_STORAGE = {

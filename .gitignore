@@ -1,43 +1,103 @@
-# Documentation / Large binaries
+# ==============================================================================
+# ARIS Platform - Production .gitignore
+# Only track source code and required project assets. Exclude all binaries,
+# environment variables, build artifacts, virtual environments, and caches.
+# ==============================================================================
+
+# ─── Documentation Assets & Non-Code Media ────────────────────────────────────
 docs/*.pdf
 docs/*.pptx
+docs/*.ppt
 docs/*.docx
+docs/*.doc
+docs/*.xlsx
+docs/*.xls
+docs/*.csv
 docs/*.html
+docs/*.htm
+docs/*.jpeg
+docs/*.jpg
+docs/*.png
+docs/*.webp
+docs/*.gif
+docs/*.svg
+docs/*.bmp
+docs/*.tiff
+docs/*.zip
+docs/*.rar
+docs/*.tar.gz
+docs/*.7z
+docs/*.mp4
+docs/*.mov
+docs/*.avi
 
-# Python & Django (server)
-server/venv/
-server/.env
-server/.env.*
-server/__pycache__/
+# ─── Python & Django (Server) ─────────────────────────────────────────────────
+**/venv/
+**/.venv/
+**/env/
+**/ENV/
+**/__pycache__/
 *.py[cod]
-server/db.sqlite3
-server/media/
-server/staticfiles/
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+*.sqlite3
+*.sqlite3-journal
+**/db.sqlite3
+**/db.sqlite3-journal
+**/media/
+**/staticfiles/
+.pytest_cache/
+.coverage
+htmlcov/
 
-# Next.js & Node (client)
-client/node_modules/
-client/.next/
-client/out/
-client/build/
-client/.turbo/
-client/.vercel/
-client/*.tsbuildinfo
-client/.env
-client/.env*.local
-client/.env*
-!client/.env.example
+# ─── Next.js & Node.js (Client) ───────────────────────────────────────────────
+**/node_modules/
+**/.next/
+**/out/
+**/build/
+**/dist/
+**/.turbo/
+**/.vercel/
+*.tsbuildinfo
+.npm/
 
-# Logs & Debug
+# ─── Environment Variables & Secrets ──────────────────────────────────────────
+.env
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
+
+# ─── Logs, Debugging & Temporary Files ────────────────────────────────────────
 *.log
+*.log.*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+scratch/
+tmp/
+temp/
+*.tmp
+*.bak
+*~
 
-# IDE & OS
+# ─── OS & IDE Configuration ───────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
 .vscode/
 .idea/
-.DS_Store
-Thumbs.db
 *.swp
 *.swo

@@ -7,12 +7,14 @@ from .views import (
     ProjectArchiveListView,
     HODFacultyApprovalListView,
     HODFacultyApprovalActionView,
+    HODAssignSupervisorView,
 )
 
 urlpatterns = [
     # HOD Review
     path('dossiers/', HODDossierListView.as_view(), name='hod-dossiers-list'),
     path('dossiers/<uuid:group_id>/action/', HODDossierActionView.as_view(), name='hod-dossier-action'),
+    path('groups/<uuid:group_id>/assign-supervisor/', HODAssignSupervisorView.as_view(), name='hod-assign-supervisor'),
     path('faculty/', HODFacultyApprovalListView.as_view(), name='hod-faculty-list'),
     path('faculty/<int:supervisor_id>/action/', HODFacultyApprovalActionView.as_view(), name='hod-faculty-action'),
 

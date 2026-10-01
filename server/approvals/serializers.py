@@ -44,7 +44,13 @@ class ProjectDossierSerializer(serializers.ModelSerializer):
     department       = serializers.CharField(source='track.department', read_only=True)
     target_program   = serializers.CharField(source='track.target_program', read_only=True)
     target_semester  = serializers.IntegerField(source='track.target_semester', read_only=True)
+    category         = serializers.CharField(source='track.category', read_only=True)
+    session_year     = serializers.CharField(source='track.session.year', read_only=True)
+    session_term     = serializers.CharField(source='track.session.term', read_only=True)
     supervisor_name  = serializers.CharField(source='supervisor.user.get_full_name', read_only=True)
+    supervisor_email = serializers.CharField(source='supervisor.user.email', read_only=True)
+    supervisor_designation = serializers.CharField(source='supervisor.designation', read_only=True)
+    supervisor_department  = serializers.CharField(source='supervisor.department', read_only=True)
     submission       = ProjectSubmissionSerializer(read_only=True)
     approved_proposal = serializers.SerializerMethodField()
     approval_records = ApprovalRecordSerializer(many=True, read_only=True)
@@ -57,11 +63,17 @@ class ProjectDossierSerializer(serializers.ModelSerializer):
             'status',
             'track',
             'track_title',
+            'category',
+            'session_year',
+            'session_term',
             'department',
             'target_program',
             'target_semester',
             'supervisor',
             'supervisor_name',
+            'supervisor_email',
+            'supervisor_designation',
+            'supervisor_department',
             'members',
             'approved_proposal',
             'submission',

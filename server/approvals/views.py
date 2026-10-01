@@ -31,13 +31,29 @@ class HODDossierListView(generics.ListAPIView):
 
     def get_queryset(self):
         hod_dept = self.request.user.department
-        queryset = StudentGroup.objects.filter(track__department=hod_dept).select_related(
-            'track', 'supervisor__user', 'created_by'
+        all_departments = self.request.query_params.get('all_departments', 'false').lower() == 'true'
+
+        queryset = StudentGroup.objects.all().select_related(
+            'track', 'track__session', 'supervisor__user', 'created_by'
         ).prefetch_related(
             'members__student__user',
             'proposals',
             'approval_records__actioned_by'
         )
+
+        dept_param = self.request.query_params.get('department')
+        if dept_param:
+            queryset = queryset.filter(track__department=dept_param)
+        elif not all_departments and hod_dept:
+            queryset = queryset.filter(track__department=hod_dept)
+
+        year_param = self.request.query_params.get('session_year')
+        if year_param:
+            queryset = queryset.filter(track__session__year=year_param)
+
+        term_param = self.request.query_params.get('session_term')
+        if term_param:
+            queryset = queryset.filter(track__session__term=term_param.upper())
 
         status_filter = self.request.query_params.get('status', StudentGroup.Status.SUBMITTED)
         if status_filter != 'all':
@@ -253,3 +269,42 @@ class HODFacultyApprovalActionView(generics.GenericAPIView):
             FacultyApprovalDossierSerializer(supervisor).data,
             status=status.HTTP_200_OK
         )
+
+
+class HODAssignSupervisorView(generics.GenericAPIView):
+    """
+    POST /api/approvals/groups/<uuid:group_id>/assign-supervisor/
+    Body: {"supervisor_id": 123}
+    Allows HOD to assign or change the faculty supervisor for a group in their department.
+    """
+    permission_classes = [IsHOD]
+
+    def post(self, request, group_id, *args, **kwargs):
+        try:
+            group = StudentGroup.objects.select_related('track').get(id=group_id)
+        except StudentGroup.DoesNotExist:
+            raise NotFound("Student group not found.")
+
+        if group.track.department != request.user.department:
+            raise PermissionDenied("You can only manage groups within your own department.")
+
+        supervisor_id = request.data.get('supervisor_id')
+        if not supervisor_id:
+            raise ValidationError({'supervisor_id': 'Supervisor ID is required.'})
+
+        try:
+            supervisor = SupervisorProfile.objects.select_related('user').get(
+                id=supervisor_id,
+                department=request.user.department,
+                approval_status='APPROVED'
+            )
+        except SupervisorProfile.DoesNotExist:
+            raise ValidationError({'supervisor_id': 'Approved supervisor not found in this department.'})
+
+        group.supervisor = supervisor
+        if group.status in [StudentGroup.Status.FORMED, StudentGroup.Status.SUPERVISOR_PENDING]:
+            group.status = StudentGroup.Status.ACTIVE
+        group.save(update_fields=['supervisor', 'status', 'updated_at'])
+
+        return Response(ProjectDossierSerializer(group).data, status=status.HTTP_200_OK)
+

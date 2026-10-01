@@ -52,7 +52,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                         )
 
         data = super().validate(attrs)
-        data['user'] = UserSummarySerializer(self.user).data
+        data['user'] = CurrentUserDetailSerializer(self.user).data
         return data
 
 

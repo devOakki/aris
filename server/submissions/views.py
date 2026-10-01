@@ -104,6 +104,8 @@ class FileUploadView(generics.GenericAPIView):
         'PPT': ['.pdf', '.ppt', '.pptx'],
         'MEDIA': ['.jpg', '.jpeg', '.png', '.webp'],
         'AVATAR': ['.jpg', '.jpeg', '.png', '.webp'],
+        'TEMPLATE': ['.pdf', '.ppt', '.pptx', '.doc', '.docx', '.zip'],
+        'DOC': ['.pdf', '.ppt', '.pptx', '.doc', '.docx', '.zip', '.txt'],
     }
 
     MAX_FILE_SIZES = {
@@ -113,6 +115,8 @@ class FileUploadView(generics.GenericAPIView):
         'PPT': 25 * 1024 * 1024,             # 25MB
         'MEDIA': 10 * 1024 * 1024,           # 10MB
         'AVATAR': 5 * 1024 * 1024,           # 5MB
+        'TEMPLATE': 35 * 1024 * 1024,        # 35MB
+        'DOC': 30 * 1024 * 1024,             # 30MB
     }
 
     def post(self, request, *args, **kwargs):
@@ -172,7 +176,7 @@ class FileUploadView(generics.GenericAPIView):
 
         # Auto-attach URL directly to student's submission record or user avatar
         auto_attach = request.data.get('auto_attach', 'true').lower() == 'true'
-        if auto_attach:
+        if auto_attach and deliverable_type not in ['TEMPLATE', 'DOC']:
             now = timezone.now()
             user = request.user
 

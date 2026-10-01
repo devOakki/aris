@@ -12,7 +12,7 @@ from .models import (
     ProjectSession,
     SessionAttendance,
 )
-from accounts.models import StudentProfile, SupervisorProfile
+from accounts.models import AcademicSession, StudentProfile, SupervisorProfile
 
 
 class ProjectDeadlineSerializer(serializers.ModelSerializer):
@@ -22,11 +22,17 @@ class ProjectDeadlineSerializer(serializers.ModelSerializer):
         model = ProjectDeadline
         fields = (
             'id',
+            'track',
             'deadline_type',
             'title',
             'due_date',
+            'template_url',
+            'template_filename',
+            'instructions',
+            'late_submission_allowed',
             'is_passed',
             'created_at',
+            'updated_at',
         )
 
     def get_is_passed(self, obj):
@@ -35,6 +41,7 @@ class ProjectDeadlineSerializer(serializers.ModelSerializer):
 
 class ProjectTrackSerializer(serializers.ModelSerializer):
     deadlines        = ProjectDeadlineSerializer(many=True, read_only=True)
+    session          = serializers.PrimaryKeyRelatedField(queryset=AcademicSession.objects.all(), required=False)
     session_year     = serializers.CharField(source='session.year', read_only=True)
     session_term     = serializers.CharField(source='session.term', read_only=True)
     coordinator_name = serializers.CharField(source='coordinator.user.get_full_name', read_only=True)
@@ -70,6 +77,7 @@ class GroupMemberSummarySerializer(serializers.ModelSerializer):
     email         = serializers.EmailField(source='student.user.email', read_only=True)
     program       = serializers.CharField(source='student.program', read_only=True)
     semester      = serializers.IntegerField(source='student.semester', read_only=True)
+    avatar_url    = serializers.CharField(source='student.user.avatar_url', read_only=True)
 
     class Meta:
         model = GroupMember
@@ -81,16 +89,26 @@ class GroupMemberSummarySerializer(serializers.ModelSerializer):
             'program',
             'semester',
             'member_role',
+            'avatar_url',
             'joined_at',
         )
 
 
 class StudentGroupSerializer(serializers.ModelSerializer):
-    members         = GroupMemberSummarySerializer(many=True, read_only=True)
-    track_title     = serializers.CharField(source='track.title', read_only=True)
-    supervisor_name = serializers.CharField(source='supervisor.user.get_full_name', read_only=True)
-    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
-    latest_proposal = serializers.SerializerMethodField()
+    members            = GroupMemberSummarySerializer(many=True, read_only=True)
+    track_id           = serializers.UUIDField(source='track.id', read_only=True)
+    track_title        = serializers.CharField(source='track.title', read_only=True)
+    category           = serializers.CharField(source='track.category', read_only=True)
+    department         = serializers.CharField(source='track.department', read_only=True)
+    target_program     = serializers.CharField(source='track.target_program', read_only=True)
+    target_semester    = serializers.IntegerField(source='track.target_semester', read_only=True)
+    session_year       = serializers.CharField(source='track.session.year', read_only=True)
+    session_term       = serializers.CharField(source='track.session.term', read_only=True)
+    supervisor_name    = serializers.CharField(source='supervisor.user.get_full_name', read_only=True)
+    created_by_name    = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    latest_proposal    = serializers.SerializerMethodField()
+    supervisor_details = serializers.SerializerMethodField()
+    submission         = serializers.SerializerMethodField()
 
     class Meta:
         model = StudentGroup
@@ -98,14 +116,23 @@ class StudentGroupSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'track',
+            'track_id',
             'track_title',
+            'category',
+            'department',
+            'target_program',
+            'target_semester',
+            'session_year',
+            'session_term',
             'supervisor',
             'supervisor_name',
+            'supervisor_details',
             'created_by',
             'created_by_name',
             'status',
             'members',
             'latest_proposal',
+            'submission',
             'created_at',
             'updated_at',
         )
@@ -114,6 +141,42 @@ class StudentGroupSerializer(serializers.ModelSerializer):
         latest = obj.proposals.order_by('-version').first()
         if latest:
             return ProjectProposalSerializer(latest).data
+        return None
+
+    def get_supervisor_details(self, obj):
+        if not obj.supervisor:
+            return None
+        return {
+            'id': str(obj.supervisor.id),
+            'full_name': obj.supervisor.user.get_full_name(),
+            'email': obj.supervisor.user.email,
+            'avatar_url': obj.supervisor.user.avatar_url,
+            'designation': obj.supervisor.designation,
+            'department': obj.supervisor.department,
+            'expertise_domains': obj.supervisor.expertise_domains,
+            'expertise_tech': obj.supervisor.expertise_tech,
+        }
+
+    def get_submission(self, obj):
+        submission = getattr(obj, 'submission', None)
+        if not submission:
+            from submissions.models import ProjectSubmission
+            submission = ProjectSubmission.objects.filter(group=obj).first()
+        if submission:
+            return {
+                'id': str(submission.id),
+                'synopsis_url': submission.synopsis_url,
+                'synopsis_submitted_at': submission.synopsis_submitted_at,
+                'ppt_url': submission.ppt_url,
+                'ppt_submitted_at': submission.ppt_submitted_at,
+                'report_url': submission.report_url,
+                'report_submitted_at': submission.report_submitted_at,
+                'research_paper_url': submission.research_paper_url,
+                'github_repo_url': submission.github_repo_url,
+                'live_demo_url': submission.live_demo_url,
+                'media_urls': submission.media_urls,
+                'all_completed_at': submission.all_completed_at,
+            }
         return None
 
 
@@ -230,8 +293,11 @@ class StudentGroupCreateSerializer(serializers.Serializer):
 
 
 class ProjectIdeaSerializer(serializers.ModelSerializer):
-    supervisor_name = serializers.CharField(source='supervisor.user.get_full_name', read_only=True)
-    taken_by_name   = serializers.CharField(source='taken_by.name', read_only=True)
+    supervisor             = serializers.PrimaryKeyRelatedField(read_only=True)
+    supervisor_name        = serializers.CharField(source='supervisor.user.get_full_name', read_only=True)
+    supervisor_designation = serializers.CharField(source='supervisor.designation', read_only=True)
+    supervisor_avatar      = serializers.CharField(source='supervisor.user.avatar_url', read_only=True)
+    taken_by_name          = serializers.CharField(source='taken_by.name', read_only=True)
 
     class Meta:
         model = ProjectIdea
@@ -239,15 +305,20 @@ class ProjectIdeaSerializer(serializers.ModelSerializer):
             'id',
             'supervisor',
             'supervisor_name',
+            'supervisor_designation',
+            'supervisor_avatar',
             'title',
             'problem_statement',
             'novelty',
             'domain',
             'technologies',
+            'supporting_doc_url',
+            'supporting_doc_name',
             'is_taken',
             'taken_by',
             'taken_by_name',
             'created_at',
+            'updated_at',
         )
 
 
@@ -298,11 +369,11 @@ class ProjectProposalCreateSerializer(serializers.ModelSerializer):
         if not group.members.filter(student__user=user).exists():
             raise serializers.ValidationError("You are not a member of this group.")
 
-        # If proposal is FROM_LIST, ensure project_idea belongs to the group's assigned supervisor
+        # If proposal is FROM_LIST, ensure project_idea belongs to the group's assigned supervisor if already set
         if attrs['proposal_type'] == ProjectProposal.ProposalType.FROM_LIST:
             if not attrs.get('project_idea'):
                 raise serializers.ValidationError("Project idea is required when proposal type is 'From List'.")
-            if attrs['project_idea'].supervisor != group.supervisor:
+            if group.supervisor and attrs['project_idea'].supervisor != group.supervisor:
                 raise serializers.ValidationError("The selected idea does not belong to your assigned supervisor.")
 
         return attrs
@@ -315,10 +386,13 @@ class ProjectProposalCreateSerializer(serializers.ModelSerializer):
         validated_data['version'] = existing_versions + 1
 
         with transaction.atomic():
+            if not group.supervisor and validated_data.get('project_idea'):
+                group.supervisor = validated_data['project_idea'].supervisor
+                group.save(update_fields=['supervisor'])
             proposal = ProjectProposal.objects.create(**validated_data)
             # Update group status to PROPOSAL_PENDING
             group.status = StudentGroup.Status.PROPOSAL_PENDING
-            group.save()
+            group.save(update_fields=['status'])
 
         return proposal
 
@@ -347,7 +421,7 @@ class ProjectProposalReviewSerializer(serializers.Serializer):
 
             group = proposal.group
             if status == ProjectProposal.Status.APPROVED:
-                group.status = StudentGroup.Status.IN_PROGRESS
+                group.status = StudentGroup.Status.ACTIVE
                 # If tied to an idea from the supervisor's bank, mark it taken
                 if proposal.project_idea:
                     idea = proposal.project_idea

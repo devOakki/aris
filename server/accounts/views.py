@@ -95,3 +95,14 @@ class CurrentAcademicSessionView(generics.RetrieveAPIView):
         if not session:
             raise NotFound("No active academic session configured.")
         return session
+
+
+class AcademicSessionListView(generics.ListAPIView):
+    """
+    GET /api/accounts/sessions/
+    Lists all academic sessions ordered by year and term for history audit.
+    """
+    serializer_class   = AcademicSessionSerializer
+    permission_classes = [IsAuthenticated]
+    queryset           = AcademicSession.objects.all().order_by('-year', '-term')
+

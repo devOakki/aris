@@ -107,23 +107,25 @@ class GroupMember(models.Model):
 
 
 class ProjectIdea(models.Model):
-    id                = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    supervisor        = models.ForeignKey(SupervisorProfile, on_delete=models.CASCADE, related_name='posted_ideas')
-    title             = models.CharField(max_length=200)
-    problem_statement = models.TextField()
-    novelty           = models.TextField()
-    domain            = models.CharField(max_length=100)
-    technologies      = models.JSONField(default=list)
-    is_taken          = models.BooleanField(default=False)
-    taken_by          = models.OneToOneField(
+    id                  = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    supervisor          = models.ForeignKey(SupervisorProfile, on_delete=models.CASCADE, related_name='posted_ideas')
+    title               = models.CharField(max_length=200)
+    problem_statement   = models.TextField()
+    novelty             = models.TextField()
+    domain              = models.CharField(max_length=100)
+    technologies        = models.JSONField(default=list)
+    supporting_doc_url  = models.URLField(blank=True, default='', max_length=500)
+    supporting_doc_name = models.CharField(max_length=255, blank=True, default='')
+    is_taken            = models.BooleanField(default=False)
+    taken_by            = models.OneToOneField(
         StudentGroup,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
         related_name='locked_idea'
     )
-    created_at        = models.DateTimeField(auto_now_add=True)
-    updated_at        = models.DateTimeField(auto_now=True)
+    created_at          = models.DateTimeField(auto_now_add=True)
+    updated_at          = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'project_ideas'
@@ -180,19 +182,23 @@ class ProjectDeadline(models.Model):
         GITHUB   = 'GITHUB',   'GitHub Repository Link'
         CUSTOM   = 'CUSTOM',   'Custom Milestone'
 
-    id            = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    track         = models.ForeignKey(ProjectTrack, on_delete=models.CASCADE, related_name='deadlines')
-    deadline_type = models.CharField(max_length=15, choices=DeadlineType.choices)
-    title         = models.CharField(max_length=100, blank=True, default='')
-    due_date      = models.DateTimeField()
-    set_by        = models.ForeignKey(
+    id                      = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    track                   = models.ForeignKey(ProjectTrack, on_delete=models.CASCADE, related_name='deadlines')
+    deadline_type           = models.CharField(max_length=15, choices=DeadlineType.choices)
+    title                   = models.CharField(max_length=100, blank=True, default='')
+    due_date                = models.DateTimeField()
+    template_url            = models.URLField(blank=True, default='', max_length=500)
+    template_filename       = models.CharField(max_length=255, blank=True, default='')
+    instructions            = models.TextField(blank=True, default='')
+    late_submission_allowed = models.BooleanField(default=False)
+    set_by                  = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         related_name='deadlines_set'
     )
-    created_at    = models.DateTimeField(auto_now_add=True)
-    updated_at    = models.DateTimeField(auto_now=True)
+    created_at              = models.DateTimeField(auto_now_add=True)
+    updated_at              = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'project_deadlines'

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Lock,
@@ -20,7 +20,6 @@ import {
   RotateCcw,
   Briefcase,
   Phone,
-  X,
   Code2,
   ExternalLink,
 } from 'lucide-react';
@@ -138,6 +137,23 @@ export default function AuthPage() {
     }
   }, []);
 
+  // Dynamic Academic Session calculation based on current month and year
+  const academicSession = useMemo(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // 1 (January) to 12 (December)
+
+    if (currentMonth <= 6) {
+      // Month <= 6 (January - June): Previous year - current year
+      const prevYear = currentYear - 1;
+      return `Session: ${prevYear}-${String(currentYear).slice(-2)}`;
+    } else {
+      // Month > 6 (July - December): Current year - next year
+      const nextYear = currentYear + 1;
+      return `Session: ${currentYear}-${String(nextYear).slice(-2)}`;
+    }
+  }, []);
+
   // Active View Mode (Institutional Sign-in vs Registration)
   const [authMode, setAuthMode] = useState<'signin' | 'register'>('signin');
   const [formUnlocked, setFormUnlocked] = useState<boolean>(false);
@@ -160,8 +176,6 @@ export default function AuthPage() {
   const [phone, setPhone] = useState<string>('');
 
   const [enteredOtp, setEnteredOtp] = useState<string>('');
-  const [generatedOtp, setGeneratedOtp] = useState<string>('');
-  const [isOtpSent, setIsOtpSent] = useState<boolean>(false);
   const [isEmailVerified, setIsEmailVerified] = useState<boolean>(false);
   const [resendTimer, setResendTimer] = useState<number>(0);
 
@@ -197,8 +211,8 @@ export default function AuthPage() {
     setUniversityId(cleaned);
   };
 
-  // Reset fields on auth mode change to prevent any residual credential retention
-  useEffect(() => {
+  const switchAuthMode = (mode: 'signin' | 'register') => {
+    setAuthMode(mode);
     setSignInId('');
     setSignInPassword('');
     setUniversityId('');
@@ -212,7 +226,7 @@ export default function AuthPage() {
     setErrorMessage('');
     setSuccessMessage('');
     setFormUnlocked(false);
-  }, [authMode]);
+  };
 
   //OTP Countdown
   useEffect(() => {
@@ -223,36 +237,77 @@ export default function AuthPage() {
     return () => clearInterval(interval);
   }, [resendTimer]);
 
-  //OTP Function
-  const handleSendOtp = () => {
+  const [isSendingOtp, setIsSendingOtp] = useState<boolean>(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState<boolean>(false);
+
+  // OTP Function - Real Institutional Email Service
+  const handleSendOtp = async (): Promise<boolean> => {
     const cleanEmail = sanitizeText(email).toLowerCase();
     if (!cleanEmail || !cleanEmail.includes('@')) {
       setErrorMessage('Please enter a valid institutional email address before requesting an OTP.');
+      return false;
+    }
+
+    setErrorMessage('');
+    setIsSendingOtp(true);
+    try {
+      const full = `${firstName.trim()} ${lastName.trim()}`.trim();
+      const res = await fetch('http://127.0.0.1:8000/api/accounts/otp/send/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, full_name: full }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMessage(data.detail || data.email || 'Failed to dispatch verification email. Please try again.');
+        return false;
+      }
+
+      setResendTimer(data.cooldown_seconds || 30);
+      setEnteredOtp('');
+      setSuccessMessage(data.detail || `Official verification code dispatched to ${cleanEmail}. Please check your inbox.`);
+      return true;
+    } catch {
+      setErrorMessage('Unable to connect to university email service. Please ensure the backend is active.');
+      return false;
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    const cleanEmail = sanitizeText(email).toLowerCase();
+    const cleanOtp = enteredOtp.trim();
+    if (!cleanOtp || cleanOtp.length < 6) {
+      setErrorMessage('Please enter the 6-digit verification code sent to your email.');
       return;
     }
 
-    // Generate 6-digit OTP
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(code);
-    setIsOtpSent(true);
-    setResendTimer(60);
+    setErrorMessage('');
+    setIsVerifyingOtp(true);
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/accounts/otp/verify/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, otp: cleanOtp }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMessage(data.detail || 'Invalid verification code. Please check your email and try again.');
+        return;
+      }
 
-    // Development preview
-    setSuccessMessage(`Verification code sent to ${cleanEmail}! (Dev code: ${code})`);
-  };
-
-
-  const handleVerifyOtp = () => {
-    if (enteredOtp.trim() === generatedOtp) {
       setIsEmailVerified(true);
       setErrorMessage('');
-      setSuccessMessage('Email verified successfully! Proceeding to Academic details.');
+      setSuccessMessage('Institutional email verified successfully! Proceeding to Academic details.');
       setTimeout(() => {
         setSuccessMessage('');
         setCurrentStep(3);
       }, 500);
-    } else {
-      setErrorMessage('Invalid verification code. Please check your email and try again.');
+    } catch {
+      setErrorMessage('Failed to connect to verification service. Please try again.');
+    } finally {
+      setIsVerifyingOtp(false);
     }
   };
 
@@ -403,6 +458,7 @@ export default function AuthPage() {
       localStorage.setItem('access_token', data.access);
       localStorage.setItem('refresh_token', data.refresh);
       localStorage.setItem('aris_user', JSON.stringify(data.user));
+      localStorage.setItem('user', JSON.stringify(data.user));
       setSuccessMessage(`Welcome back, ${data.user.full_name}! Redirecting to workspace...`);
       // Role-based routing (replace prevents back-button returning to login page)
       setTimeout(() => {
@@ -507,7 +563,7 @@ export default function AuthPage() {
 
       // 3. Supervisors require HOD approval before login
       if (role === 'SUPERVISOR') {
-        setAuthMode('signin');
+        switchAuthMode('signin');
         setCurrentStep(1);
         setPassword('');
         setSuccessMessage(
@@ -537,12 +593,13 @@ export default function AuthPage() {
         localStorage.setItem('access_token', accessToken);
         localStorage.setItem('refresh_token', loginData.refresh);
         localStorage.setItem('aris_user', JSON.stringify(loginData.user));
+        localStorage.setItem('user', JSON.stringify(loginData.user));
 
         setTimeout(() => {
           router.replace('/dashboard/student');
         }, 800);
       } else {
-        setAuthMode('signin');
+        switchAuthMode('signin');
         setSuccessMessage('Account created! Please sign in with your credentials.');
       }
     } catch (err: unknown) {
@@ -585,14 +642,12 @@ export default function AuthPage() {
         <div className="w-full bg-[#B81D24] text-white py-2.5 sm:py-3 px-4 sm:px-6 lg:px-8 shadow-inner">
           <div className="max-w-7xl mx-auto flex items-center justify-between text-xs sm:text-sm font-bold uppercase tracking-wider">
             <div className="flex items-center gap-3">
-              <span>Institutional Portal Gateway</span>
-              <span className="text-red-200 hidden sm:inline">|</span>
               <span className="text-red-100 font-normal normal-case hidden sm:inline">
                 School of Engineering and Computing (SoEC)
               </span>
             </div>
             <div className="text-red-100 font-mono text-xs">
-              Session: 2026-27
+              {academicSession}
             </div>
           </div>
         </div>
@@ -613,9 +668,7 @@ export default function AuthPage() {
             <button
               type="button"
               onClick={() => {
-                setAuthMode('signin');
-                setErrorMessage('');
-                setSuccessMessage('');
+                switchAuthMode('signin');
               }}
               className={`py-2.5 rounded-sm transition-colors text-center cursor-pointer ${
                 authMode === 'signin'
@@ -628,9 +681,7 @@ export default function AuthPage() {
             <button
               type="button"
               onClick={() => {
-                setAuthMode('register');
-                setErrorMessage('');
-                setSuccessMessage('');
+                switchAuthMode('register');
               }}
               className={`py-2.5 rounded-sm transition-colors text-center cursor-pointer ${
                 authMode === 'register'
@@ -683,7 +734,7 @@ export default function AuthPage() {
                     name="aris_erp_user_code"
                     id="aris_erp_user_code"
                     autoComplete="off"
-                    placeholder="e.g., DBUU2023BCA001"
+                    placeholder="e.g., 24BCA0027, DBUUF0023"
                     value={signInId}
                     onChange={(e) => setSignInId(e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase())}
                     className="w-full bg-slate-50 border border-slate-300 rounded-sm pl-9 pr-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#B81D24] focus:ring-1 focus:ring-[#B81D24] transition-colors"
@@ -867,7 +918,7 @@ export default function AuthPage() {
                         }}
                         autoComplete="off"
                         name="aris_reg_univ_id"
-                        placeholder={role === 'STUDENT' ? 'e.g., DBUU2023BCA101' : 'e.g., EMP9824'}
+                        placeholder={role === 'STUDENT' ? 'e.g., 24BCA0027' : 'e.g., DBUUF0023'}
                         value={universityId}
                         onChange={(e) => handleUniversityIdChange(e.target.value)}
                         className="w-full bg-slate-50 border border-slate-300 rounded-sm pl-9 pr-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#B81D24] focus:ring-1 focus:ring-[#B81D24]"
@@ -930,7 +981,7 @@ export default function AuthPage() {
                   {/* Email & Phone */}
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
-                      Institutional Email Address
+                      Email Address
                     </label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
@@ -1021,19 +1072,31 @@ export default function AuthPage() {
 
                   <button
                     type="button"
-                    onClick={() => {
+                    disabled={isSendingOtp}
+                    onClick={async () => {
                       if (!universityId.trim() || !firstName.trim() || !lastName.trim() || !email.trim() || password.length < 6) {
                         setErrorMessage('Please fill in all mandatory fields (Password must be at least 6 characters).');
                         return;
                       }
                       setErrorMessage('');
-                      handleSendOtp();
-                      setCurrentStep(2);
+                      const ok = await handleSendOtp();
+                      if (ok) {
+                        setCurrentStep(2);
+                      }
                     }}
-                    className="w-full mt-2 py-2.5 rounded-sm bg-[#B81D24] hover:bg-[#9E181E] text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full mt-2 py-2.5 rounded-sm bg-[#B81D24] hover:bg-[#9E181E] disabled:bg-slate-400 text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
                   >
-                    Proceed to Email Verification
-                    <ArrowRight className="w-4 h-4" />
+                    {isSendingOtp ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Dispatching Code...
+                      </>
+                    ) : (
+                      <>
+                        Proceed to Email Verification
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
                   </button>
                 </div>
               )}
@@ -1045,7 +1108,10 @@ export default function AuthPage() {
                     <Mail className="w-6 h-6 text-[#B81D24] mx-auto mb-1.5" />
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">Email Verification Required</h3>
                     <p className="text-xs text-slate-600 mt-1">
-                      A 6-digit OTP was dispatched to <span className="text-[#B81D24] font-mono font-bold">{email}</span>
+                      A 6-digit OTP was dispatched to <span className="text-[#B81D24] font-mono font-bold">{email}</span>.
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-1.5">
+                      Please check your email inbox and enter the 6-digit code below.
                     </p>
                   </div>
 
@@ -1093,11 +1159,21 @@ export default function AuthPage() {
                     </button>
                     <button
                       type="button"
+                      disabled={isVerifyingOtp}
                       onClick={handleVerifyOtp}
-                      className="w-2/3 py-2.5 rounded-sm bg-[#B81D24] hover:bg-[#9E181E] text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="w-2/3 py-2.5 rounded-sm bg-[#B81D24] hover:bg-[#9E181E] disabled:bg-slate-400 text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-md flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
                     >
-                      <Check className="w-4 h-4" />
-                      Verify &amp; Continue
+                      {isVerifyingOtp ? (
+                        <>
+                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Validating...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Verify &amp; Continue
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -1398,12 +1474,9 @@ export default function AuthPage() {
       </main>
 
       <footer className="w-full py-6 bg-[#0F2137] text-slate-300 border-t-2 border-[#B81D24] z-10 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs sm:text-sm">
           <div className="font-bold text-white tracking-wide">
             © 2026 Dev Bhoomi Uttarakhand University • Dehradun
-          </div>
-          <div className="text-slate-400 text-xs">
-            Academic Repository &amp; Institutional System (ARIS) • Project Governance Portal
           </div>
         </div>
       </footer>

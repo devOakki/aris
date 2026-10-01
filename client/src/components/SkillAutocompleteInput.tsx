@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { X, Plus, Sparkles, Check } from 'lucide-react';
+import { X, Plus, Sparkles } from 'lucide-react';
 
 interface SkillAutocompleteInputProps {
   label: string;
