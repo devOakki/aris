@@ -9,6 +9,8 @@ import {
   ChevronRight, Code2, X, Menu, ChevronLeft, BookOpen,
   Plus, UserPlus, FolderOpen, ArrowLeft,
   Search, Send, Paperclip, Lightbulb, BookMarked,
+  Check, Sparkles, Lock, FileText,
+  Clock, Ban,
 } from 'lucide-react';
 
 // ─── TECH SUGGESTIONS ─────────────────────────────────────────────────
@@ -62,11 +64,18 @@ export interface ProposalData {
   group_name: string;
   proposal_type: string;
   project_idea?: string;
+  supervisor?: number;
+  supervisor_id?: number;
+  supervisor_name?: string;
+  supervisor_details?: SupervisorDetails | null;
   title: string;
   problem_statement: string;
   novelty: string;
+  solution?: string;
   domain: string;
   technologies: string[];
+  supporting_doc_url?: string;
+  supporting_doc_name?: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   version: number;
   supervisor_feedback: string;
@@ -88,7 +97,7 @@ export interface SubmissionData {
 }
 
 export interface SupervisorDetails {
-  id: string;
+  id: string | number;
   full_name: string;
   email: string;
   avatar_url?: string;
@@ -96,6 +105,25 @@ export interface SupervisorDetails {
   department: string;
   expertise_domains?: string[];
   expertise_tech?: string[];
+  is_accepting?: boolean;
+}
+
+export interface GroupJoinRequestData {
+  id: string;
+  group: string;
+  student: string;
+  student_id: string;
+  university_id: string;
+  student_name: string;
+  full_name: string;
+  email: string;
+  program: string;
+  semester: number;
+  avatar_url?: string;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
+  message?: string;
+  created_at: string;
+  updated_at?: string;
 }
 
 export interface StudentGroupData {
@@ -104,6 +132,7 @@ export interface StudentGroupData {
   track: string;
   track_id: string;
   track_title: string;
+  max_group_size?: number;
   category: string;
   department: string;
   target_program: string;
@@ -119,6 +148,12 @@ export interface StudentGroupData {
   members: GroupMemberData[];
   latest_proposal?: ProposalData | null;
   submission?: SubmissionData | null;
+  join_requests?: GroupJoinRequestData[];
+  my_join_request?: {
+    id: string;
+    status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
+    created_at: string;
+  } | null;
   created_at: string;
   updated_at: string;
 }
@@ -126,12 +161,18 @@ export interface StudentGroupData {
 export interface TrackDeadlineData {
   id: string;
   track: string;
-  deadline_type: 'SYNOPSIS' | 'PPT' | 'REPORT' | 'GITHUB';
+  deadline_type: 'SYNOPSIS' | 'PPT' | 'REPORT' | 'GITHUB' | string;
   title: string;
   due_date: string;
   template_url: string;
   template_filename: string;
   instructions: string;
+  font_family?: string;
+  typography?: string;
+  spacing_alignment?: string;
+  page_margins?: string;
+  page_limit?: string;
+  file_format?: string;
   late_submission_allowed: boolean;
   is_passed: boolean;
   created_at: string;
@@ -145,6 +186,7 @@ export interface ProjectTrackOption {
   target_program: string;
   target_semester: number;
   max_group_size: number;
+  max_groups_per_supervisor?: number;
   is_active: boolean;
   required_deliverables?: string[];
   deadlines?: TrackDeadlineData[];
@@ -158,13 +200,17 @@ export interface SupervisorMarketplaceItem {
   department: string;
   avatar_url?: string;
   is_accepting: boolean;
+  is_quota_full?: boolean;
+  available_slots?: number;
+  max_groups?: number;
+  active_groups?: number;
   expertise_domains?: string[];
   expertise_tech?: string[];
 }
 
 export interface ProjectIdeaData {
   id: string;
-  supervisor: string;
+  supervisor: number | string;
   supervisor_name: string;
   supervisor_designation?: string;
   supervisor_avatar?: string;
@@ -182,7 +228,7 @@ export interface ProjectIdeaData {
 // ─── SIDEBAR NAV ──────────────────────────────────────────────────────
 const NAV_ITEMS = [
   { key: 'tracks', label: 'My Tracks', icon: FolderGit2 },
-  { key: 'deliverables', label: 'Deliverable Formats', icon: Layers },
+  { key: 'deliverables', label: 'Formats', icon: FileText },
 ];
 
 // ─── AVATAR COMPONENT ─────────────────────────────────────────────────
@@ -211,14 +257,167 @@ function Avatar({ url, name, size = 8 }: { url?: string; name?: string; size?: n
 }
 
 // ─── SECTION WRAPPER ──────────────────────────────────────────────────
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+  action,
+}: {
+  title: string;
+  children: React.ReactNode;
+  action?: React.ReactNode;
+}) {
   return (
     <div className="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
-      <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/80">
+      <div className="px-3.5 sm:px-5 py-3 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between gap-2 flex-wrap">
         <h2 className="text-[12px] font-black uppercase tracking-wider text-slate-600">{title}</h2>
+        {action}
       </div>
       <div className="p-5">{children}</div>
     </div>
+  );
+}
+
+// ─── JOIN REQUESTS MODAL ──────────────────────────────────────────────
+function JoinRequestsModal({
+  open,
+  onClose,
+  requests,
+  onRespond,
+  respondingId,
+  isGroupFull,
+  currentMembers,
+  maxMembers,
+}: {
+  open: boolean;
+  onClose: () => void;
+  requests: GroupJoinRequestData[];
+  onRespond: (requestId: string, action: 'ACCEPT' | 'REJECT') => void;
+  respondingId: string | null;
+  isGroupFull: boolean;
+  currentMembers: number;
+  maxMembers: number;
+}) {
+  if (!open) return null;
+
+  return (
+    <Modal onClose={onClose} title="Group Join Requests" wide>
+      <div className="space-y-4">
+        {/* Capacity status banner */}
+        <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs gap-3">
+          <div>
+            <p className="font-bold text-slate-800">
+              Team Capacity: <span className="font-mono text-slate-900">{currentMembers} / {maxMembers}</span> members
+            </p>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              {isGroupFull
+                ? 'Group has reached maximum size set by HOD. No additional members can be accepted.'
+                : `${maxMembers - currentMembers} open slot${maxMembers - currentMembers > 1 ? 's' : ''} available.`}
+            </p>
+          </div>
+          {isGroupFull ? (
+            <span className="px-2.5 py-1 bg-red-100 text-[#B81D24] text-[10px] font-black uppercase rounded-full shrink-0">
+              Full
+            </span>
+          ) : (
+            <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase rounded-full shrink-0">
+              Open Slots
+            </span>
+          )}
+        </div>
+
+        {/* Requests list */}
+        {requests.length === 0 ? (
+          <div className="text-center py-10 bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
+            <Users className="w-9 h-9 text-slate-300 mx-auto mb-2" />
+            <p className="text-xs font-bold text-slate-700">No pending join requests</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              When eligible students request to join your team, their requests will appear here.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+            {requests.map((req) => {
+              const name = req.full_name || req.student_name || 'Student';
+              const id = req.university_id || req.student_id || '';
+              const isProcessing = respondingId === req.id;
+
+              return (
+                <div
+                  key={req.id}
+                  className="p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs hover:border-slate-300 transition-all space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Avatar url={req.avatar_url} name={name} size={10} />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-xs font-black text-slate-900">{name}</p>
+                          <span className="text-[10px] text-slate-400 font-mono">({id})</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          {req.program} · Semester {req.semester}
+                        </p>
+                        <p className="text-[10px] text-blue-600 font-mono">{req.email}</p>
+                      </div>
+                    </div>
+
+                    <span className="text-[10px] text-slate-400 shrink-0">
+                      {new Date(req.created_at).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                  </div>
+
+                  {req.message && (
+                    <div className="p-2 bg-slate-50 border border-slate-100 rounded-lg text-[11px] text-slate-600 italic">
+                      "{req.message}"
+                    </div>
+                  )}
+
+                  <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button
+                      onClick={() => onRespond(req.id, 'REJECT')}
+                      disabled={isProcessing}
+                      className="w-full sm:w-auto px-3 py-2 sm:py-1.5 text-xs font-bold text-slate-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50 text-center"
+                    >
+                      {isProcessing ? 'Processing...' : 'Reject'}
+                    </button>
+                    <button
+                      onClick={() => onRespond(req.id, 'ACCEPT')}
+                      disabled={isProcessing || isGroupFull}
+                      title={isGroupFull ? 'Group is already at maximum capacity' : 'Accept member into group'}
+                      className="w-full sm:w-auto px-3.5 py-2 sm:py-1.5 bg-[#B81D24] hover:bg-[#9E181E] disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                    >
+                      {isProcessing ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Accepting...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          Accept & Add to Team
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="flex justify-end pt-2 border-t border-slate-100">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 
@@ -235,19 +434,19 @@ function Modal({
   wide?: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       <div
-        className={`bg-white rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-150 my-6 ${
+        className={`bg-white rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-150 my-auto max-h-[92vh] flex flex-col ${
           wide ? 'w-full max-w-lg' : 'w-full max-w-sm'
         }`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-slate-100 shrink-0">
           <h3 className="text-sm font-black text-slate-900">{title}</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 cursor-pointer p-1">
             <X className="w-4 h-4" />
           </button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className="p-3.5 sm:p-5 overflow-y-auto">{children}</div>
       </div>
     </div>
   );
@@ -272,6 +471,10 @@ function UploadModal({
   uploading: boolean;
 }) {
   if (!open) return null;
+  const isPpt = type === 'PPT';
+  const acceptedTypes = isPpt ? '.ppt,.pptx,.pdf' : '.pdf';
+  const typeHint = isPpt ? 'PPT, PPTX, or PDF up to 25MB' : 'PDF document up to 20MB';
+
   return (
     <Modal title={`Upload ${type}`} onClose={onClose}>
       <div className="space-y-3">
@@ -282,11 +485,11 @@ function UploadModal({
             <input
               type="file"
               className="hidden"
-              accept=".pdf,.doc,.docx,.ppt,.pptx"
+              accept={acceptedTypes}
               onChange={(e) => onFileChange(e.target.files?.[0] || null)}
             />
           </label>
-          <p className="text-[10px] text-slate-400 mt-1">PDF, DOCX, PPT up to 25MB</p>
+          <p className="text-[10px] text-slate-400 mt-1">{typeHint}</p>
           {file && (
             <div className="mt-3 p-2 bg-slate-50 border border-slate-200 rounded-lg text-left flex items-center justify-between">
               <span className="text-[10px] font-mono text-slate-700 truncate">{file.name}</span>
@@ -363,107 +566,14 @@ function LinkModal({
   );
 }
 
-// ─── CHOOSE SUPERVISOR MODAL ──────────────────────────────────────────
-function ChooseSupervisorModal({
-  open,
+// ─── PROPOSAL SUBMISSION FULL PAGE COMPONENT ──────────────────────────
+function ProposalSubmissionPage({
+  mode,
+  selectedIdea,
   supervisors,
-  loading,
-  onClose,
-  onSelect,
-  selectingId,
-}: {
-  open: boolean;
-  supervisors: SupervisorMarketplaceItem[];
-  loading: boolean;
-  onClose: () => void;
-  onSelect: (id: number) => void;
-  selectingId: number | null;
-}) {
-  const [search, setSearch] = useState('');
-  if (!open) return null;
-
-  const filtered = supervisors.filter((s) => {
-    const q = search.toLowerCase();
-    return (
-      s.full_name.toLowerCase().includes(q) ||
-      s.department.toLowerCase().includes(q) ||
-      (s.expertise_domains || []).some((d) => d.toLowerCase().includes(q))
-    );
-  });
-
-  return (
-    <Modal title="Choose Your Supervisor" onClose={onClose} wide>
-      <div className="space-y-3">
-        <div className="relative">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by faculty name or domain..."
-            className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-[#B81D24]"
-          />
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center py-10">
-            <div className="w-6 h-6 border-[3px] border-slate-200 border-t-[#B81D24] rounded-full animate-spin" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-xs font-bold text-slate-600">No supervisors found</p>
-          </div>
-        ) : (
-          <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
-            {filtered.map((s) => (
-              <div
-                key={s.id}
-                className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200 hover:border-slate-300 transition-all gap-3"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <Avatar url={s.avatar_url} name={s.full_name} size={10} />
-                  <div className="min-w-0">
-                    <p className="text-xs font-black text-slate-900 truncate">{s.full_name}</p>
-                    <p className="text-[10px] text-slate-500 truncate">
-                      {s.designation} · {s.department}
-                    </p>
-                    {s.expertise_domains && s.expertise_domains.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {s.expertise_domains.slice(0, 3).map((d) => (
-                          <span
-                            key={d}
-                            className="px-1.5 py-0.5 bg-white text-slate-600 text-[8px] font-bold rounded border border-slate-200"
-                          >
-                            {d}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => onSelect(s.id)}
-                  disabled={selectingId === s.id || !s.is_accepting}
-                  className="px-3 py-1.5 bg-[#B81D24] hover:bg-[#9E181E] disabled:opacity-50 text-white text-[10px] font-bold rounded-lg cursor-pointer shrink-0 transition-colors"
-                >
-                  {selectingId === s.id ? (
-                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : s.is_accepting ? (
-                    'Select'
-                  ) : (
-                    'Not Accepting'
-                  )}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </Modal>
-  );
-}
-
-// ─── PROPOSE IDEA MODAL ───────────────────────────────────────────────
-function ProposeIdeaModal({
+  supervisorsLoading,
+  selectedSupervisorId,
+  onSelectSupervisor,
   form,
   setForm,
   techInput,
@@ -472,27 +582,77 @@ function ProposeIdeaModal({
   setTechSuggestions,
   proposeFile,
   setProposeFile,
-  onClose,
+  existingDocUrl,
+  existingDocName,
+  onBack,
   onSubmit,
   submitting,
 }: {
-  form: { title: string; problem_statement: string; novelty: string; domain: string; technologies: string[] };
-  setForm: (f: { title: string; problem_statement: string; novelty: string; domain: string; technologies: string[] }) => void;
+  mode: 'custom' | 'pool';
+  selectedIdea: ProjectIdeaData | null;
+  supervisors: SupervisorMarketplaceItem[];
+  supervisorsLoading: boolean;
+  selectedSupervisorId: number | null;
+  onSelectSupervisor: (id: number) => void;
+  form: {
+    title: string;
+    problem_statement: string;
+    solution: string;
+    novelty: string;
+    domain: string;
+    technologies: string[];
+  };
+  setForm: React.Dispatch<
+    React.SetStateAction<{
+      title: string;
+      problem_statement: string;
+      solution: string;
+      novelty: string;
+      domain: string;
+      technologies: string[];
+    }>
+  >;
   techInput: string;
   setTechInput: (v: string) => void;
   techSuggestions: string[];
   setTechSuggestions: (v: string[]) => void;
   proposeFile: File | null;
   setProposeFile: (f: File | null) => void;
-  onClose: () => void;
+  existingDocUrl?: string;
+  existingDocName?: string;
+  onBack: () => void;
   onSubmit: () => void;
   submitting: boolean;
 }) {
+  const [supervisorSearch, setSupervisorSearch] = useState('');
+  const [isChangingSupervisor, setIsChangingSupervisor] = useState(false);
+
+  // Selected supervisor details
+  const selectedSupervisor = useMemo(() => {
+    if (!selectedSupervisorId) return null;
+    return supervisors.find((s) => s.id === selectedSupervisorId) || null;
+  }, [supervisors, selectedSupervisorId]);
+
+  // Filtered supervisors for custom search
+  const filteredSupervisors = useMemo(() => {
+    const q = supervisorSearch.trim().toLowerCase();
+    if (!q) return supervisors;
+    return supervisors.filter((s) => {
+      const matchName = s.full_name?.toLowerCase().includes(q);
+      const matchDept = s.department?.toLowerCase().includes(q);
+      const matchDomains = (s.expertise_domains || []).some((d) => d.toLowerCase().includes(q));
+      const matchTech = (s.expertise_tech || []).some((t) => t.toLowerCase().includes(q));
+      return matchName || matchDept || matchDomains || matchTech;
+    });
+  }, [supervisors, supervisorSearch]);
+
   const handleTechInput = (val: string) => {
     setTechInput(val);
-    if (val.length > 0) {
+    if (val.trim().length > 0) {
       setTechSuggestions(
-        TECH_SUGGESTIONS.filter((t) => t.toLowerCase().includes(val.toLowerCase()) && !form.technologies.includes(t)).slice(0, 6)
+        TECH_SUGGESTIONS.filter(
+          (t) => t.toLowerCase().includes(val.toLowerCase()) && !form.technologies.includes(t)
+        ).slice(0, 8)
       );
     } else {
       setTechSuggestions([]);
@@ -500,89 +660,531 @@ function ProposeIdeaModal({
   };
 
   const addTech = (t: string) => {
-    setForm({ ...form, technologies: [...form.technologies, t] });
+    if (!form.technologies.includes(t)) {
+      setForm((prev) => ({ ...prev, technologies: [...prev.technologies, t] }));
+    }
     setTechInput('');
     setTechSuggestions([]);
   };
 
   const removeTech = (t: string) => {
-    setForm({ ...form, technologies: form.technologies.filter((x) => x !== t) });
+    setForm((prev) => ({ ...prev, technologies: prev.technologies.filter((x) => x !== t) }));
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-8 animate-in fade-in zoom-in-95 duration-150">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-          <h3 className="text-sm font-black text-slate-900">Propose Your Project Idea</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 cursor-pointer p-1">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="p-5 space-y-3.5 max-h-[70vh] overflow-y-auto">
-          {([
-            { label: 'Project Title *', key: 'title', placeholder: 'e.g. Smart Campus Navigation & Resource Management' },
-            { label: 'Problem Statement *', key: 'problem_statement', placeholder: 'Describe the core challenge this project addresses...' },
-            { label: 'Novelty / Approach', key: 'novelty', placeholder: 'What makes your solution unique or superior?' },
-            { label: 'Domain', key: 'domain', placeholder: 'e.g. Machine Learning, Cloud Systems, IoT' },
-          ] as const).map(({ label, key, placeholder }) => (
-            <div key={key}>
-              <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">{label}</label>
-              <textarea
-                value={form[key]}
-                onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                placeholder={placeholder}
-                rows={key === 'title' || key === 'domain' ? 1 : 2}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-[#B81D24] resize-none"
-              />
-            </div>
-          ))}
+  const domainPills = [
+    'AI & Machine Learning',
+    'Web & Cloud Systems',
+    'Cyber Security',
+    'Mobile Application Development',
+    'IoT & Smart Systems',
+    'Data Science & Analytics',
+    'Blockchain & Decentralized Tech',
+  ];
 
+  return (
+    <div className="flex-1 p-3.5 sm:p-6 md:p-8 space-y-4 sm:space-y-6 max-w-5xl mx-auto w-full">
+      {/* Top Breadcrumb & Action */}
+      <div>
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-[#B81D24] cursor-pointer transition-colors bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-xs hover:border-[#B81D24] w-fit"
+        >
+          <ArrowLeft className="w-4 h-4 text-slate-500" />
+          Back to Project Overview
+        </button>
+      </div>
+
+      {/* Page Title & Context Header */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6">
+        <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">
+          {mode === 'pool' ? 'Submit Proposal for Idea Pool' : 'Propose New Project Idea'}
+        </h2>
+        <p className="text-xs md:text-sm text-slate-600 mt-1 leading-relaxed">
+          {mode === 'pool'
+            ? 'You are adopting this project idea proposed by faculty. Provide your proposed technical architecture, solution approach, and team implementation plan.'
+            : 'Formulate your group project idea, choose the most suitable faculty mentor based on their research domains, and submit for approval.'}
+        </p>
+      </div>
+
+      {/* ── SECTION 1: FACULTY SUPERVISOR SELECTION ── */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-3.5 sm:space-y-4">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3 flex-wrap">
           <div>
-            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Tech Stack</label>
-            <div className="flex flex-wrap gap-1 mb-1.5">
-              {form.technologies.map((t) => (
-                <span
-                  key={t}
-                  className="flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded border border-blue-100"
-                >
-                  {t}
-                  <button onClick={() => removeTech(t)} className="cursor-pointer opacity-60 hover:opacity-100">
-                    <X className="w-2.5 h-2.5" />
-                  </button>
-                </span>
-              ))}
-            </div>
-            <div className="relative">
-              <input
-                value={techInput}
-                onChange={(e) => handleTechInput(e.target.value)}
-                placeholder="Type to search tech stack..."
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-[#B81D24]"
-              />
-              {techSuggestions.length > 0 && (
-                <div className="absolute z-10 left-0 right-0 top-full mt-0.5 bg-white border border-slate-200 rounded-lg shadow-lg max-h-36 overflow-y-auto">
-                  {techSuggestions.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => addTech(s)}
-                      className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 cursor-pointer text-slate-800 font-medium"
-                    >
-                      {s}
-                    </button>
-                  ))}
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+              Faculty Supervisor & Mentor <span className="text-red-500">*</span>
+            </h3>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              {mode === 'pool'
+                ? 'Supervisor is locked to the faculty member who proposed this idea.'
+                : 'Select the mentor whose domain expertise matches your project scope.'}
+            </p>
+          </div>
+          {mode === 'pool' && (
+            <span className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-[11px] font-bold">
+              <Lock className="w-3.5 h-3.5 text-amber-600" />
+              Pre-assigned Mentor (Locked)
+            </span>
+          )}
+        </div>
+
+        {/* In Pool Mode: Locked Supervisor View */}
+        {mode === 'pool' ? (
+          <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200">
+            {selectedSupervisor ? (
+              <div className="flex items-start gap-4">
+                <Avatar url={selectedSupervisor.avatar_url} name={selectedSupervisor.full_name} size={12} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-black text-slate-900">{selectedSupervisor.full_name}</p>
+                    <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded">
+                      Idea Proposer
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    {selectedSupervisor.designation} · {selectedSupervisor.department}
+                  </p>
+                  <p className="text-[11px] text-blue-600 font-mono mt-0.5">{selectedSupervisor.email}</p>
+
+                  {selectedSupervisor.expertise_domains && selectedSupervisor.expertise_domains.length > 0 && (
+                    <div className="mt-2.5">
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">
+                        Domain Expertise
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedSupervisor.expertise_domains.map((d) => (
+                          <span
+                            key={d}
+                            className="px-2 py-0.5 bg-white text-slate-700 text-[10px] font-semibold rounded border border-slate-200"
+                          >
+                            {d}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedSupervisor.expertise_tech && selectedSupervisor.expertise_tech.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">
+                        Technologies
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedSupervisor.expertise_tech.map((t) => (
+                          <span
+                            key={t}
+                            className="px-2 py-0.5 bg-slate-200/70 text-slate-700 text-[9px] font-mono rounded"
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
+            ) : selectedIdea ? (
+              <div className="flex items-start gap-4">
+                <Avatar url={selectedIdea.supervisor_avatar} name={selectedIdea.supervisor_name} size={12} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-black text-slate-900">{selectedIdea.supervisor_name}</p>
+                    <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded">
+                      Idea Proposer
+                    </span>
+                  </div>
+                  {selectedIdea.supervisor_designation && (
+                    <p className="text-xs text-slate-600 mt-0.5">{selectedIdea.supervisor_designation}</p>
+                  )}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          /* In Custom Mode: Interactive Selector with Search & Full Details */
+          <div>
+            {selectedSupervisor && !isChangingSupervisor ? (
+              <div className="p-4 bg-emerald-50/70 rounded-xl border border-emerald-200 flex items-start justify-between gap-4 flex-wrap">
+                <div className="flex items-start gap-4 min-w-0">
+                  <Avatar url={selectedSupervisor.avatar_url} name={selectedSupervisor.full_name} size={12} />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-black text-slate-900">{selectedSupervisor.full_name}</p>
+                      <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full flex items-center gap-1">
+                        <Check className="w-3 h-3" /> Selected Mentor
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      {selectedSupervisor.designation} · {selectedSupervisor.department}
+                    </p>
+                    <p className="text-[11px] text-blue-600 font-mono mt-0.5">{selectedSupervisor.email}</p>
+
+                    {selectedSupervisor.expertise_domains && selectedSupervisor.expertise_domains.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {selectedSupervisor.expertise_domains.map((d) => (
+                          <span
+                            key={d}
+                            className="px-2 py-0.5 bg-white text-slate-700 text-[9px] font-bold rounded border border-emerald-200"
+                          >
+                            {d}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {selectedSupervisor.expertise_tech && selectedSupervisor.expertise_tech.length > 0 && (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {selectedSupervisor.expertise_tech.map((t) => (
+                          <span
+                            key={t}
+                            className="px-1.5 py-0.5 bg-emerald-100/60 text-emerald-800 text-[9px] font-mono rounded"
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsChangingSupervisor(true)}
+                  className="px-3.5 py-1.5 border border-emerald-300 hover:bg-emerald-100/80 text-emerald-900 text-xs font-bold rounded-lg cursor-pointer transition-colors"
+                >
+                  Change Mentor
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    value={supervisorSearch}
+                    onChange={(e) => setSupervisorSearch(e.target.value)}
+                    placeholder="Search faculty by name, department, domain, or technology..."
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#B81D24] focus:bg-white transition-all"
+                  />
+                  {supervisorSearch && (
+                    <button
+                      onClick={() => setSupervisorSearch('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {supervisorsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="w-6 h-6 border-[3px] border-slate-200 border-t-[#B81D24] rounded-full animate-spin" />
+                  </div>
+                ) : filteredSupervisors.length === 0 ? (
+                  <div className="text-center py-6 bg-slate-50 rounded-xl border border-slate-200">
+                    <p className="text-xs font-bold text-slate-600">No matching faculty supervisors found</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Try searching with a different keyword</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto pr-1">
+                    {filteredSupervisors.map((s) => {
+                      const isSelected = selectedSupervisorId === s.id;
+                      const maxGroups = s.max_groups || 10;
+                      const activeGroups = s.active_groups || 0;
+                      const isQuotaFull = s.is_quota_full || (s.available_slots !== undefined && s.available_slots <= 0) || (activeGroups >= maxGroups) || !s.is_accepting;
+
+                      return (
+                        <div
+                          key={s.id}
+                          className={`p-3.5 rounded-xl border transition-all flex flex-col justify-between gap-3 ${
+                            isSelected
+                              ? 'bg-red-50/50 border-[#B81D24] shadow-xs'
+                              : isQuotaFull
+                              ? 'bg-slate-50/60 border-slate-200 opacity-80'
+                              : 'bg-slate-50/70 border-slate-200 hover:border-slate-300 hover:bg-white'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <Avatar url={s.avatar_url} name={s.full_name} size={10} />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-1 flex-wrap">
+                                <p className="text-xs font-black text-slate-900 truncate">{s.full_name}</p>
+                                {isQuotaFull ? (
+                                  <span className="px-2 py-0.5 bg-red-100 text-[#B81D24] text-[9px] font-black uppercase rounded-full">
+                                    Quota Full ({activeGroups}/{maxGroups})
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-bold rounded-full">
+                                    Available ({activeGroups}/{maxGroups})
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-slate-500 truncate mt-0.5">
+                                {s.designation} · {s.department}
+                              </p>
+                              <p className="text-[10px] text-blue-600 font-mono truncate">{s.email}</p>
+
+                              {s.expertise_domains && s.expertise_domains.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-1.5">
+                                  {s.expertise_domains.slice(0, 3).map((d) => (
+                                    <span
+                                      key={d}
+                                      className="px-1.5 py-0.5 bg-white text-slate-600 text-[8px] font-bold rounded border border-slate-200 truncate max-w-[130px]"
+                                    >
+                                      {d}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+
+                              {s.expertise_tech && s.expertise_tech.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {s.expertise_tech.slice(0, 4).map((t) => (
+                                    <span
+                                      key={t}
+                                      className="px-1.5 py-0.2 bg-slate-200/70 text-slate-700 text-[8px] font-mono rounded"
+                                    >
+                                      {t}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-end pt-2.5 border-t border-slate-200/60 mt-auto">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!isQuotaFull) {
+                                  onSelectSupervisor(s.id);
+                                  setIsChangingSupervisor(false);
+                                }
+                              }}
+                              disabled={isQuotaFull}
+                              title={isQuotaFull ? 'This mentor has reached maximum group quota' : 'Choose this supervisor'}
+                              className={`w-full sm:w-auto px-4 py-1.5 text-xs font-bold rounded-lg transition-colors text-center ${
+                                isQuotaFull
+                                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                  : isSelected
+                                  ? 'bg-[#B81D24] text-white'
+                                  : 'bg-white border border-slate-300 hover:border-[#B81D24] hover:text-[#B81D24] text-slate-700 cursor-pointer'
+                              }`}
+                            >
+                              {isQuotaFull ? 'Quota Full' : isSelected ? 'Selected' : 'Select Mentor'}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── SECTION 2: PROJECT TITLE & DOMAIN ── */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-3.5 sm:space-y-4">
+        <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 border-b border-slate-100 pb-3">
+          Project Information
+        </h3>
+
+        <div>
+          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            Project Title <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            value={form.title}
+            onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+            placeholder="e.g. AI-Driven Smart Traffic Monitoring and Emergency Vehicle Routing"
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs md:text-sm font-semibold text-slate-900 focus:outline-none focus:border-[#B81D24] focus:bg-white transition-all"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            Domain / Category
+          </label>
+          <input
+            type="text"
+            value={form.domain}
+            onChange={(e) => setForm((prev) => ({ ...prev, domain: e.target.value }))}
+            placeholder="e.g. AI & Machine Learning, Web Systems, IoT..."
+            className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#B81D24] focus:bg-white transition-all"
+          />
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {domainPills.map((d) => (
+              <button
+                key={d}
+                type="button"
+                onClick={() => setForm((prev) => ({ ...prev, domain: d }))}
+                className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-colors cursor-pointer ${
+                  form.domain === d
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-blue-300'
+                }`}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            Problem Statement <span className="text-red-500">*</span>
+          </label>
+          <p className="text-[11px] text-slate-500 mb-1.5">
+            Clearly explain the real-world problem or inefficiency this project intends to address.
+          </p>
+          <textarea
+            value={form.problem_statement}
+            onChange={(e) => setForm((prev) => ({ ...prev, problem_statement: e.target.value }))}
+            placeholder="Describe the challenge, target beneficiaries, and shortcomings of current systems..."
+            rows={4}
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs md:text-sm text-slate-900 focus:outline-none focus:border-[#B81D24] focus:bg-white transition-all resize-y leading-relaxed"
+          />
+        </div>
+      </div>
+
+      {/* ── SECTION 3: PROPOSED SOLUTION & ARCHITECTURE ── */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-3.5 sm:space-y-4">
+        <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 border-b border-slate-100 pb-3">
+          Technical Approach & Solution
+        </h3>
+
+        <div>
+          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            Proposed Solution & Technical Approach <span className="text-red-500">*</span>
+          </label>
+          <p className="text-[11px] text-slate-500 mb-1.5">
+            Describe how your team intends to solve the problem: architectural diagram summary, algorithms, pipeline,
+            and expected deliverables.
+          </p>
+          <textarea
+            value={form.solution}
+            onChange={(e) => setForm((prev) => ({ ...prev, solution: e.target.value }))}
+            placeholder="Outline your planned system architecture, workflow, data sources, core modules, and implementation methodology..."
+            rows={5}
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs md:text-sm text-slate-900 focus:outline-none focus:border-[#B81D24] focus:bg-white transition-all resize-y leading-relaxed"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            Novelty / Key Innovations
+          </label>
+          <p className="text-[11px] text-slate-500 mb-1.5">
+            What makes your approach innovative, distinct, or superior compared to existing tools?
+          </p>
+          <textarea
+            value={form.novelty}
+            onChange={(e) => setForm((prev) => ({ ...prev, novelty: e.target.value }))}
+            placeholder="Highlight unique features, proprietary dataset, integration of specialized models, or cost advantages..."
+            rows={3}
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs md:text-sm text-slate-900 focus:outline-none focus:border-[#B81D24] focus:bg-white transition-all resize-y leading-relaxed"
+          />
+        </div>
+
+        {/* Tech Stack Chips & Autocomplete */}
+        <div>
+          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            Technologies & Frameworks
+          </label>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {form.technologies.map((t) => (
+              <span
+                key={t}
+                className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-800 text-[11px] font-bold rounded-lg border border-blue-200"
+              >
+                {t}
+                <button
+                  type="button"
+                  onClick={() => removeTech(t)}
+                  className="cursor-pointer text-blue-600 hover:text-blue-900"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
           </div>
 
-          <div>
-            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-              Supporting Document (optional)
-            </label>
-            <div className="border-2 border-dashed border-slate-200 rounded-lg p-3 text-center">
-              <label className="cursor-pointer text-xs font-bold text-slate-500 hover:text-[#B81D24]">
-                <Paperclip className="w-3.5 h-3.5 inline mr-1" />
-                {proposeFile ? proposeFile.name : 'Attach PDF or DOCX synopsis/draft'}
+          <div className="relative">
+            <input
+              value={techInput}
+              onChange={(e) => handleTechInput(e.target.value)}
+              placeholder="Search or type a technology (e.g. React, PyTorch, Docker, PostgreSQL)..."
+              className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#B81D24] focus:bg-white transition-all"
+            />
+            {techSuggestions.length > 0 && (
+              <div className="absolute z-10 left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                {techSuggestions.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => addTech(s)}
+                    className="w-full text-left px-4 py-2 text-xs hover:bg-slate-50 cursor-pointer text-slate-800 font-semibold border-b border-slate-50 last:border-0"
+                  >
+                    + {s}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Supporting Document Attachment */}
+        <div>
+          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            Supporting Document (Optional)
+          </label>
+          <p className="text-[11px] text-slate-500 mb-2">
+            Attach your project synopsis draft, flow diagram, or technical paper in PDF or DOCX format (up to 30MB).
+          </p>
+
+          {existingDocUrl && !proposeFile && (
+            <div className="mb-2 p-3 bg-blue-50/80 border border-blue-200 rounded-xl flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <Paperclip className="w-4 h-4 text-blue-600 shrink-0" />
+                <span className="text-xs font-bold text-blue-900 truncate">
+                  {existingDocName || 'Attached Idea Specification Document'}
+                </span>
+              </div>
+              <a
+                href={existingDocUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-blue-700 font-bold hover:underline shrink-0"
+              >
+                View File
+              </a>
+            </div>
+          )}
+
+          {proposeFile ? (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span className="text-xs font-bold text-emerald-900 truncate">{proposeFile.name}</span>
+                <span className="text-[10px] text-emerald-700 font-mono shrink-0">
+                  ({(proposeFile.size / 1024 / 1024).toFixed(2)} MB)
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setProposeFile(null)}
+                className="text-xs text-red-600 font-bold hover:underline cursor-pointer"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div className="border-2 border-dashed border-slate-200 hover:border-[#B81D24]/50 rounded-xl p-5 text-center transition-colors">
+              <label className="cursor-pointer text-xs font-bold text-[#B81D24] hover:underline flex flex-col items-center justify-center gap-1.5">
+                <Paperclip className="w-5 h-5 text-slate-400" />
+                <span>Upload PDF or DOCX synopsis/draft</span>
+                <span className="text-[10px] text-slate-400 font-normal">Click to browse from your device</span>
                 <input
                   type="file"
                   className="hidden"
@@ -591,33 +1193,44 @@ function ProposeIdeaModal({
                 />
               </label>
             </div>
-          </div>
+          )}
         </div>
-        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-slate-600 text-xs font-bold hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onSubmit}
-            disabled={submitting || !form.title.trim() || !form.problem_statement.trim()}
-            className="px-5 py-2 bg-[#B81D24] hover:bg-[#9E181E] disabled:opacity-50 text-white text-xs font-bold rounded-lg cursor-pointer flex items-center gap-1.5 transition-colors"
-          >
-            {submitting ? (
-              <>
-                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Submitting...
-              </>
-            ) : (
-              <>
-                <Send className="w-3 h-3" />
-                Submit Proposal
-              </>
-            )}
-          </button>
-        </div>
+      </div>
+
+      {/* ── ACTION BAR ── */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-3.5 sm:p-5 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-4 sticky bottom-2 sm:bottom-4 z-10">
+        <button
+          type="button"
+          onClick={onBack}
+          className="w-full sm:w-auto px-5 py-2.5 text-slate-600 text-xs font-bold hover:bg-slate-100 rounded-xl cursor-pointer transition-colors text-center"
+        >
+          Cancel & Return
+        </button>
+
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={
+            submitting ||
+            !selectedSupervisorId ||
+            !form.title.trim() ||
+            !form.problem_statement.trim() ||
+            !form.solution.trim()
+          }
+          className="w-full sm:w-auto justify-center px-6 py-2.5 bg-[#B81D24] hover:bg-[#9E181E] disabled:opacity-50 text-white text-xs md:text-sm font-bold rounded-xl cursor-pointer flex items-center gap-2 transition-colors shadow-sm"
+        >
+          {submitting ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Submitting Proposal...
+            </>
+          ) : (
+            <>
+              <Send className="w-4 h-4" />
+              Submit Proposal to Faculty Mentor
+            </>
+          )}
+        </button>
       </div>
     </div>
   );
@@ -644,88 +1257,133 @@ function SidebarShell({
   const [avatarErr, setAvatarErr] = useState(false);
 
   return (
-    <aside
-      className={`sticky top-0 h-screen flex flex-col justify-between bg-white border-r border-slate-200 shadow-sm transition-all duration-300 ease-in-out shrink-0 z-30 ${
-        sidebarOpen ? 'w-56' : 'w-[64px]'
-      }`}
-    >
-      <div className="flex flex-col flex-1 overflow-hidden">
-        {/* Top Sidebar Logo */}
-        <div className="flex items-center justify-center border-b border-slate-100 py-3.5 px-2 overflow-hidden h-[74px] shrink-0">
-          {sidebarOpen ? (
-            <div className="w-full flex items-center justify-center transition-all duration-200">
-              <Image
-                src="/images/logo.jpeg"
-                alt="Dev Bhoomi Uttarakhand University"
-                width={190}
-                height={56}
-                priority
-                className="object-contain w-full max-h-12"
-              />
-            </div>
-          ) : (
-            <div className="w-11 h-11 rounded-lg flex items-center justify-center overflow-hidden transition-all duration-200">
-              <Image
-                src="/images/dbgi.avif"
-                alt="DBUU Logo"
-                width={44}
-                height={44}
-                priority
-                className="object-contain w-10 h-10 rounded-md"
-              />
-            </div>
-          )}
+    <>
+      {/* Mobile Backdrop Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-xs transition-opacity duration-300"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`fixed lg:sticky top-0 h-screen flex flex-col justify-between bg-white border-r border-slate-200 shadow-xl lg:shadow-sm transition-all duration-300 ease-in-out shrink-0 z-50 lg:z-30 ${
+          sidebarOpen
+            ? 'translate-x-0 w-64 lg:w-56'
+            : '-translate-x-full lg:translate-x-0 w-64 lg:w-[64px]'
+        }`}
+      >
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {/* Top Sidebar Logo */}
+          <div className="flex items-center justify-between border-b border-slate-100 py-3.5 px-3 overflow-hidden h-[74px] shrink-0">
+            {sidebarOpen ? (
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center justify-center transition-all duration-200 flex-1">
+                  <Image
+                    src="/images/logo.jpeg"
+                    alt="Dev Bhoomi Uttarakhand University"
+                    width={180}
+                    height={52}
+                    priority
+                    className="object-contain w-full max-h-11"
+                  />
+                </div>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="lg:hidden p-1.5 text-slate-400 hover:text-slate-700 rounded-lg ml-2 cursor-pointer"
+                  aria-label="Close menu"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <div className="w-11 h-11 rounded-lg flex items-center justify-center overflow-hidden transition-all duration-200 mx-auto">
+                <Image
+                  src="/images/dbgi.avif"
+                  alt="DBUU Logo"
+                  width={44}
+                  height={44}
+                  priority
+                  className="object-contain w-10 h-10 rounded-md"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Navigation Items */}
+          <nav className="flex-1 py-4 space-y-1 overflow-y-auto">
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.key;
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => {
+                    setActiveTab(item.key);
+                    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                      setSidebarOpen(false);
+                    }
+                  }}
+                  title={!sidebarOpen ? item.label : undefined}
+                  className={`w-full flex items-center transition-all duration-150 cursor-pointer group ${
+                    sidebarOpen ? 'px-4 py-2.5 gap-3' : 'px-0 py-2.5 justify-center'
+                  } ${
+                    isActive
+                      ? 'bg-red-50 text-[#B81D24] border-r-3 border-[#B81D24] font-bold'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'
+                  }`}
+                >
+                  <Icon
+                    className={`w-4 h-4 shrink-0 transition-colors ${
+                      isActive ? 'text-[#B81D24]' : 'text-slate-400 group-hover:text-slate-700'
+                    }`}
+                  />
+                  {sidebarOpen && (
+                    <span className="text-[12px] whitespace-nowrap overflow-hidden text-ellipsis">
+                      {item.label}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
         </div>
 
-        {/* Navigation Items */}
-        <nav className="flex-1 py-4 space-y-1 overflow-y-auto">
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.key;
-            return (
+        {/* Bottom Profile Details (Name, ERP, Sign Out)  */}
+        <div className={`border-t border-slate-100 py-3.5 bg-slate-50/60 shrink-0 ${sidebarOpen ? 'px-4 space-y-2.5' : 'px-0 py-3 flex flex-col items-center gap-2'}`}>
+          {sidebarOpen ? (
+            <>
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full border border-slate-200 overflow-hidden bg-slate-100 shrink-0">
+                  {user?.avatar_url && !avatarErr ? (
+                    <img
+                      src={user.avatar_url}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      onError={() => setAvatarErr(true)}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[#B81D24] text-white flex items-center justify-center text-xs font-black">
+                      {user?.first_name?.[0] || 'S'}
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-slate-900 truncate">{user?.full_name || 'Student'}</p>
+                  <p className="text-[10px] text-slate-400 font-mono truncate">{user?.university_id}</p>
+                </div>
+              </div>
               <button
-                key={item.key}
-                onClick={() => setActiveTab(item.key)}
-                title={!sidebarOpen ? item.label : undefined}
-                className={`w-full flex items-center transition-all duration-150 cursor-pointer group ${
-                  sidebarOpen ? 'px-4 py-2.5 gap-3' : 'px-0 py-2.5 justify-center'
-                } ${
-                  isActive
-                    ? 'bg-red-50 text-[#B81D24] border-r-3 border-[#B81D24] font-bold'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'
-                }`}
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-slate-600 hover:text-[#B81D24] hover:bg-red-50 rounded-lg transition-colors cursor-pointer text-xs font-semibold"
               >
-                <Icon
-                  className={`w-4 h-4 shrink-0 transition-colors ${
-                    isActive ? 'text-[#B81D24]' : 'text-slate-400 group-hover:text-slate-700'
-                  }`}
-                />
-                {sidebarOpen && (
-                  <span className="text-[12px] whitespace-nowrap overflow-hidden text-ellipsis">
-                    {item.label}
-                  </span>
-                )}
-                {sidebarOpen && item.key === 'deliverables' && (
-                  <span
-                    className={`ml-auto text-[10px] font-black px-1.5 py-0.5 rounded-full shrink-0 ${
-                      isActive ? 'bg-red-100 text-[#B81D24]' : 'bg-slate-100 text-slate-500'
-                    }`}
-                  >
-                    {deliverablesProgress.completed}/{deliverablesProgress.total}
-                  </span>
-                )}
+                <LogOut className="w-3.5 h-3.5 shrink-0" />
+                Sign Out
               </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* Bottom Profile Details (Name, ERP, Sign Out) - Always visible pinned at bottom */}
-      <div className={`border-t border-slate-100 py-3.5 bg-slate-50/60 shrink-0 ${sidebarOpen ? 'px-4 space-y-2.5' : 'px-0 py-3 flex flex-col items-center gap-2'}`}>
-        {sidebarOpen ? (
-          <>
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full border border-slate-200 overflow-hidden bg-slate-100 shrink-0">
+            </>
+          ) : (
+            <>
+              <div className="w-8 h-8 rounded-full border border-slate-200 overflow-hidden bg-slate-100">
                 {user?.avatar_url && !avatarErr ? (
                   <img
                     src={user.avatar_url}
@@ -739,58 +1397,30 @@ function SidebarShell({
                   </div>
                 )}
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-slate-900 truncate">{user?.full_name || 'Student'}</p>
-                <p className="text-[10px] text-slate-400 font-mono truncate">{user?.university_id}</p>
-              </div>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-slate-600 hover:text-[#B81D24] hover:bg-red-50 rounded-lg transition-colors cursor-pointer text-xs font-semibold"
-            >
-              <LogOut className="w-3.5 h-3.5 shrink-0" />
-              Sign Out
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="w-8 h-8 rounded-full border border-slate-200 overflow-hidden bg-slate-100">
-              {user?.avatar_url && !avatarErr ? (
-                <img
-                  src={user.avatar_url}
-                  alt=""
-                  className="w-full h-full object-cover"
-                  onError={() => setAvatarErr(true)}
-                />
-              ) : (
-                <div className="w-full h-full bg-[#B81D24] text-white flex items-center justify-center text-xs font-black">
-                  {user?.first_name?.[0] || 'S'}
-                </div>
-              )}
-            </div>
-            <button
-              onClick={handleLogout}
-              title="Sign Out"
-              className="p-1.5 text-slate-400 hover:text-[#B81D24] hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </>
-        )}
-      </div>
+              <button
+                onClick={handleLogout}
+                title="Sign Out"
+                className="p-1.5 text-slate-400 hover:text-[#B81D24] hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
 
-      {/* Collapse Toggle Button */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="absolute -right-3 top-16 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-md cursor-pointer hover:bg-slate-50 z-10 transition-transform"
-      >
-        {sidebarOpen ? (
-          <ChevronLeft className="w-3.5 h-3.5 text-slate-600" />
-        ) : (
-          <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
-        )}
-      </button>
-    </aside>
+        {/* Collapse Toggle Button (Desktop Only) */}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="hidden lg:flex absolute -right-3 top-16 w-6 h-6 bg-white border border-slate-200 rounded-full items-center justify-center shadow-md cursor-pointer hover:bg-slate-50 z-10 transition-transform"
+        >
+          {sidebarOpen ? (
+            <ChevronLeft className="w-3.5 h-3.5 text-slate-600" />
+          ) : (
+            <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
+          )}
+        </button>
+      </aside>
+    </>
   );
 }
 
@@ -800,8 +1430,14 @@ export default function StudentDashboardPage() {
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'tracks' | 'deliverables'>('tracks');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      setSidebarOpen(true);
+    }
+  }, []);
 
   const [group, setGroup] = useState<StudentGroupData | null>(null);
   const [deadlines, setDeadlines] = useState<TrackDeadlineData[]>([]);
@@ -818,16 +1454,17 @@ export default function StudentDashboardPage() {
   // Modals
   const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
   const [isJoinListOpen, setIsJoinListOpen] = useState(false);
+  const [isJoinRequestsModalOpen, setIsJoinRequestsModalOpen] = useState(false);
+  const [respondingRequestId, setRespondingRequestId] = useState<string | null>(null);
+  const [cancellingRequestId, setCancellingRequestId] = useState<string | null>(null);
   const [pendingJoinTrackId, setPendingJoinTrackId] = useState<string | null>(null);
   const [newGroupName, setNewGroupName] = useState('');
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null);
 
-  // Supervisor selection
-  const [showSupervisorModal, setShowSupervisorModal] = useState(false);
+  // Supervisor marketplace
   const [supervisors, setSupervisors] = useState<SupervisorMarketplaceItem[]>([]);
   const [supervisorsLoading, setSupervisorsLoading] = useState(false);
-  const [selectingSupervisorId, setSelectingSupervisorId] = useState<number | null>(null);
 
   // Deliverable upload / link modals
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -847,22 +1484,23 @@ export default function StudentDashboardPage() {
   const [ideaSort, setIdeaSort] = useState<'newest' | 'oldest' | 'faculty'>('newest');
   const [ideaFilterFaculty, setIdeaFilterFaculty] = useState('');
   const [selectedIdea, setSelectedIdea] = useState<ProjectIdeaData | null>(null);
-  const [ideaSolutionDesc, setIdeaSolutionDesc] = useState('');
-  const [ideaSolutionFile, setIdeaSolutionFile] = useState<File | null>(null);
-  const [isSubmittingIdeaProposal, setIsSubmittingIdeaProposal] = useState(false);
 
-  // Propose own idea
-  const [showProposeModal, setShowProposeModal] = useState(false);
-  const [proposeForm, setProposeForm] = useState({
+  // Proposal Submission View (Full Page)
+  const [proposalMode, setProposalMode] = useState<'custom' | 'pool' | null>(null);
+  const [proposalSupervisorId, setProposalSupervisorId] = useState<number | null>(null);
+  const [proposalForm, setProposalForm] = useState({
     title: '',
     problem_statement: '',
+    solution: '',
     novelty: '',
     domain: '',
     technologies: [] as string[],
   });
-  const [proposeTechInput, setProposeTechInput] = useState('');
-  const [proposeTechSuggestions, setProposeTechSuggestions] = useState<string[]>([]);
-  const [proposeFile, setProposeFile] = useState<File | null>(null);
+  const [proposalTechInput, setProposalTechInput] = useState('');
+  const [proposalTechSuggestions, setProposalTechSuggestions] = useState<string[]>([]);
+  const [proposalFile, setProposalFile] = useState<File | null>(null);
+  const [uploadedDocUrl, setUploadedDocUrl] = useState('');
+  const [uploadedDocName, setUploadedDocName] = useState('');
   const [isSubmittingProposal, setIsSubmittingProposal] = useState(false);
 
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -890,6 +1528,18 @@ export default function StudentDashboardPage() {
     () => availableTracks.find((t) => t.id === group?.track_id || t.id === group?.track) || null,
     [availableTracks, group]
   );
+
+  const maxGroupCapacity = useMemo(() => {
+    return group?.max_group_size || myTrack?.max_group_size || 4;
+  }, [group, myTrack]);
+
+  const isGroupFull = useMemo(() => {
+    return (group?.members?.length || 0) >= maxGroupCapacity;
+  }, [group, maxGroupCapacity]);
+
+  const pendingJoinRequests = useMemo(() => {
+    return group?.join_requests || [];
+  }, [group]);
 
   const filteredIdeas = useMemo(() => {
     let list = [...ideas];
@@ -936,12 +1586,13 @@ export default function StudentDashboardPage() {
         setGroup(null);
       }
 
+      let trList: ProjectTrackOption[] = [];
       if (trackRes.ok) {
-        const trData = await trackRes.json();
-        setAvailableTracks(trData);
+        trList = await trackRes.json();
+        setAvailableTracks(trList);
       }
 
-      const trackId = currentGroup?.track_id || currentGroup?.track;
+      const trackId = currentGroup?.track_id || currentGroup?.track || (trList.length > 0 ? trList[0].id : null);
       if (trackId) {
         const dlRes = await fetch(`${API}/api/projects/tracks/${trackId}/deadlines/`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -976,21 +1627,28 @@ export default function StudentDashboardPage() {
     [tok]
   );
 
-  const loadSupervisors = useCallback(async () => {
-    setSupervisorsLoading(true);
-    try {
-      const res = await fetch(`${API}/api/accounts/supervisors/`, {
-        headers: { Authorization: `Bearer ${tok()}` },
-      });
-      if (res.ok) {
-        setSupervisors(await res.json());
+  const loadSupervisors = useCallback(
+    async (trackIdParam?: string) => {
+      setSupervisorsLoading(true);
+      try {
+        const activeTrackId = trackIdParam || group?.track_id || (group?.track as string) || viewingTrackId;
+        const url = activeTrackId
+          ? `${API}/api/accounts/supervisors/?track_id=${activeTrackId}`
+          : `${API}/api/accounts/supervisors/`;
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${tok()}` },
+        });
+        if (res.ok) {
+          setSupervisors(await res.json());
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setSupervisorsLoading(false);
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setSupervisorsLoading(false);
-    }
-  }, [tok]);
+    },
+    [tok, group?.track_id, group?.track, viewingTrackId]
+  );
 
   const loadIdeas = useCallback(async () => {
     setIdeasLoading(true);
@@ -1084,6 +1742,33 @@ export default function StudentDashboardPage() {
     try {
       const res = await fetch(`${API}/api/projects/groups/${groupId}/request-join/`, {
         method: 'POST',
+        headers: { Authorization: `Bearer ${tok()}`, 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setActionMessage({ type: 'error', text: data.detail || JSON.stringify(data) });
+        return;
+      }
+      setActionMessage({
+        type: 'success',
+        text: data.detail || 'Join request sent to the team leader! You will be added once approved.',
+      });
+      if (pendingJoinTrackId) {
+        await loadTrackGroups(pendingJoinTrackId);
+      }
+      await loadAllData(tok());
+    } catch {
+      setActionMessage({ type: 'error', text: 'Network error sending join request.' });
+    } finally {
+      setJoiningGroupId(null);
+    }
+  };
+
+  const handleCancelJoinRequest = async (groupId: string, requestId: string) => {
+    setCancellingRequestId(requestId);
+    try {
+      const res = await fetch(`${API}/api/projects/groups/${groupId}/join-requests/${requestId}/cancel/`, {
+        method: 'POST',
         headers: { Authorization: `Bearer ${tok()}` },
       });
       const data = await res.json();
@@ -1091,39 +1776,51 @@ export default function StudentDashboardPage() {
         setActionMessage({ type: 'error', text: data.detail || JSON.stringify(data) });
         return;
       }
-      setActionMessage({ type: 'success', text: 'Successfully joined group!' });
-      setIsJoinListOpen(false);
-      if (pendingJoinTrackId) setViewingTrackId(pendingJoinTrackId);
+      setActionMessage({ type: 'success', text: 'Join request cancelled successfully.' });
+      if (pendingJoinTrackId) {
+        await loadTrackGroups(pendingJoinTrackId);
+      }
       await loadAllData(tok());
     } catch {
-      setActionMessage({ type: 'error', text: 'Network error joining group.' });
+      setActionMessage({ type: 'error', text: 'Network error cancelling join request.' });
     } finally {
-      setJoiningGroupId(null);
+      setCancellingRequestId(null);
     }
   };
 
-  const handleSelectSupervisor = async (supervisorId: number) => {
-    setSelectingSupervisorId(supervisorId);
+  const handleRespondJoinRequest = async (requestId: string, action: 'ACCEPT' | 'REJECT') => {
+    if (!group) return;
+    setRespondingRequestId(requestId);
     try {
-      const res = await fetch(`${API}/api/projects/groups/my-group/select-supervisor/`, {
+      const res = await fetch(`${API}/api/projects/groups/${group.id}/join-requests/${requestId}/respond/`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${tok()}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ supervisor_id: supervisorId }),
+        headers: {
+          Authorization: `Bearer ${tok()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action }),
       });
       const data = await res.json();
       if (!res.ok) {
         setActionMessage({ type: 'error', text: data.detail || JSON.stringify(data) });
         return;
       }
-      setActionMessage({ type: 'success', text: 'Supervisor selected successfully!' });
-      setShowSupervisorModal(false);
+      setActionMessage({
+        type: 'success',
+        text: data.detail || `Request ${action.toLowerCase()}ed successfully!`,
+      });
+      if (data.group) {
+        setGroup(data.group);
+      }
       await loadAllData(tok());
     } catch {
-      setActionMessage({ type: 'error', text: 'Failed to select supervisor.' });
+      setActionMessage({ type: 'error', text: 'Network error processing join request.' });
     } finally {
-      setSelectingSupervisorId(null);
+      setRespondingRequestId(null);
     }
   };
+
+
 
   const handleDeliverableUpload = async () => {
     if (!selectedFile || !group) return;
@@ -1131,14 +1828,21 @@ export default function StudentDashboardPage() {
     try {
       const fd = new FormData();
       fd.append('file', selectedFile);
-      const res = await fetch(`${API}/api/submissions/upload/${selectedDeliverableType.toLowerCase()}/`, {
+      fd.append('deliverable_type', selectedDeliverableType);
+      fd.append('auto_attach', 'true');
+      const res = await fetch(`${API}/api/submissions/upload/`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${tok()}` },
         body: fd,
       });
       const data = await res.json();
       if (!res.ok) {
-        setActionMessage({ type: 'error', text: data.detail || JSON.stringify(data) });
+        const errorMsg =
+          data.file?.[0] ||
+          data.deliverable_type?.[0] ||
+          data.detail ||
+          (typeof data === 'object' ? Object.values(data).flat().join(' ') : 'Upload failed.');
+        setActionMessage({ type: 'error', text: errorMsg });
         return;
       }
       setActionMessage({ type: 'success', text: `${selectedDeliverableType} uploaded successfully.` });
@@ -1146,7 +1850,7 @@ export default function StudentDashboardPage() {
       setSelectedFile(null);
       await loadAllData(tok());
     } catch {
-      setActionMessage({ type: 'error', text: 'Upload failed.' });
+      setActionMessage({ type: 'error', text: 'Upload failed due to network error.' });
     } finally {
       setIsUploading(false);
     }
@@ -1155,18 +1859,26 @@ export default function StudentDashboardPage() {
   const handleSaveLink = async () => {
     if (!linkInputValue.trim() || !group) return;
     setIsSavingLink(true);
+    let url = linkInputValue.trim();
+    if (!/^https?:\/\//i.test(url)) {
+      url = 'https://' + url;
+    }
     try {
-      const res = await fetch(`${API}/api/submissions/link/github/`, {
-        method: 'POST',
+      const res = await fetch(`${API}/api/submissions/my-submission/`, {
+        method: 'PATCH',
         headers: { Authorization: `Bearer ${tok()}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: linkInputValue.trim() }),
+        body: JSON.stringify({ github_repo_url: url }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setActionMessage({ type: 'error', text: data.detail || JSON.stringify(data) });
+        const errorMsg =
+          data.github_repo_url?.[0] ||
+          data.detail ||
+          (typeof data === 'object' ? Object.values(data).flat().join(' ') : 'Failed to save link.');
+        setActionMessage({ type: 'error', text: errorMsg });
         return;
       }
-      setActionMessage({ type: 'success', text: 'GitHub repository linked.' });
+      setActionMessage({ type: 'success', text: 'GitHub repository linked successfully.' });
       setIsLinkModalOpen(false);
       await loadAllData(tok());
     } catch {
@@ -1176,71 +1888,130 @@ export default function StudentDashboardPage() {
     }
   };
 
+  const handleOpenCustomProposal = () => {
+    setProposalMode('custom');
+    setSelectedIdea(null);
+    setProposalSupervisorId(null);
+    setProposalForm({
+      title: '',
+      problem_statement: '',
+      solution: '',
+      novelty: '',
+      domain: '',
+      technologies: [],
+    });
+    setProposalTechInput('');
+    setProposalTechSuggestions([]);
+    setProposalFile(null);
+    setUploadedDocUrl('');
+    setUploadedDocName('');
+    loadSupervisors();
+  };
+
+  const handleStartPoolProposal = (idea: ProjectIdeaData) => {
+    setSelectedIdea(idea);
+    setProposalMode('pool');
+    setShowIdeaPool(false);
+    const supId = typeof idea.supervisor === 'number' ? idea.supervisor : parseInt(String(idea.supervisor), 10);
+    setProposalSupervisorId(!isNaN(supId) ? supId : null);
+    setProposalForm({
+      title: idea.title,
+      problem_statement: idea.problem_statement,
+      solution: '',
+      novelty: idea.novelty || '',
+      domain: idea.domain || '',
+      technologies: [...(idea.technologies || [])],
+    });
+    setProposalTechInput('');
+    setProposalTechSuggestions([]);
+    setProposalFile(null);
+    setUploadedDocUrl(idea.supporting_doc_url || '');
+    setUploadedDocName(idea.supporting_doc_name || '');
+    loadSupervisors();
+  };
+
   const handleSubmitProposal = async () => {
-    if (!group || !proposeForm.title.trim() || !proposeForm.problem_statement.trim()) return;
+    if (!group) return;
+    if (!proposalForm.title.trim()) {
+      setActionMessage({ type: 'error', text: 'Project title is required.' });
+      return;
+    }
+    if (!proposalForm.problem_statement.trim()) {
+      setActionMessage({ type: 'error', text: 'Problem statement is required.' });
+      return;
+    }
+    if (!proposalForm.solution.trim()) {
+      setActionMessage({ type: 'error', text: 'Proposed solution and technical approach is required.' });
+      return;
+    }
+    if (!proposalSupervisorId) {
+      setActionMessage({ type: 'error', text: 'Please select a faculty supervisor for your proposal.' });
+      return;
+    }
+
     setIsSubmittingProposal(true);
     try {
+      let docUrl = uploadedDocUrl;
+      let docName = uploadedDocName;
+
+      // If user selected a supporting doc file, upload it
+      if (proposalFile) {
+        const fd = new FormData();
+        fd.append('file', proposalFile);
+        fd.append('deliverable_type', 'DOC');
+        fd.append('auto_attach', 'false');
+        try {
+          const uploadRes = await fetch(`${API}/api/submissions/upload/`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${tok()}` },
+            body: fd,
+          });
+          if (uploadRes.ok) {
+            const upData = await uploadRes.json();
+            docUrl = upData.secure_url || upData.url || '';
+            docName = upData.file_name || proposalFile.name;
+          }
+        } catch (uploadErr) {
+          console.warn('Doc upload network warning:', uploadErr);
+        }
+      }
+
       const res = await fetch(`${API}/api/projects/proposals/`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${tok()}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           group: group.id,
-          proposal_type: 'CUSTOM',
-          title: proposeForm.title,
-          problem_statement: proposeForm.problem_statement,
-          novelty: proposeForm.novelty,
-          domain: proposeForm.domain,
-          technologies: proposeForm.technologies,
+          proposal_type: proposalMode === 'pool' ? 'FROM_LIST' : 'CUSTOM',
+          project_idea: proposalMode === 'pool' && selectedIdea ? selectedIdea.id : null,
+          supervisor_id: proposalSupervisorId,
+          title: proposalForm.title.trim(),
+          problem_statement: proposalForm.problem_statement.trim(),
+          solution: proposalForm.solution.trim(),
+          novelty: proposalForm.novelty.trim() || proposalForm.solution.trim(),
+          domain: proposalForm.domain.trim(),
+          technologies: proposalForm.technologies,
+          supporting_doc_url: docUrl,
+          supporting_doc_name: docName,
         }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setActionMessage({ type: 'error', text: data.detail || JSON.stringify(data) });
+        const msg = data.detail || (typeof data === 'object' ? Object.values(data).flat().join(' ') : 'Submission failed');
+        setActionMessage({ type: 'error', text: msg });
         return;
       }
-      setActionMessage({ type: 'success', text: 'Project proposal submitted for review.' });
-      setShowProposeModal(false);
-      setProposeForm({ title: '', problem_statement: '', novelty: '', domain: '', technologies: [] });
-      setProposeFile(null);
+
+      const assignedSupervisor = supervisors.find((s) => s.id === proposalSupervisorId);
+      const supName = assignedSupervisor ? assignedSupervisor.full_name : 'the faculty supervisor';
+      setActionMessage({ type: 'success', text: `Proposal submitted! Request sent to ${supName} for review.` });
+      setProposalMode(null);
+      setSelectedIdea(null);
+      setProposalFile(null);
       await loadAllData(tok());
     } catch {
       setActionMessage({ type: 'error', text: 'Network error submitting proposal.' });
     } finally {
       setIsSubmittingProposal(false);
-    }
-  };
-
-  const handleSubmitIdeaProposal = async () => {
-    if (!group || !selectedIdea) return;
-    setIsSubmittingIdeaProposal(true);
-    try {
-      const res = await fetch(`${API}/api/projects/proposals/`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${tok()}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          group: group.id,
-          proposal_type: 'FROM_LIST',
-          project_idea: selectedIdea.id,
-          title: selectedIdea.title,
-          problem_statement: selectedIdea.problem_statement,
-          novelty: ideaSolutionDesc.trim() || selectedIdea.novelty,
-          domain: selectedIdea.domain,
-          technologies: selectedIdea.technologies,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setActionMessage({ type: 'error', text: data.detail || JSON.stringify(data) });
-        return;
-      }
-      setActionMessage({ type: 'success', text: 'Idea selected and proposal sent to supervisor.' });
-      setSelectedIdea(null);
-      setShowIdeaPool(false);
-      await loadAllData(tok());
-    } catch {
-      setActionMessage({ type: 'error', text: 'Network error submitting idea proposal.' });
-    } finally {
-      setIsSubmittingIdeaProposal(false);
     }
   };
 
@@ -1276,15 +2047,23 @@ export default function StudentDashboardPage() {
     handleLogout,
   };
 
-  const topBarTitle = showIdeaPool
+  const topBarTitle = proposalMode === 'pool'
+    ? 'Adopt Idea & Propose Solution'
+    : proposalMode === 'custom'
+    ? 'Propose Project Idea'
+    : showIdeaPool
     ? 'Idea Pool'
     : viewingTrackId && group
     ? group.name
     : activeTab === 'tracks'
     ? 'My Tracks'
-    : 'Deliverable Formats';
+    : 'Formats';
 
-  const topBarSub = viewingTrackId && group ? group.track_title : null;
+  const topBarSub = proposalMode && group
+    ? `${group.name} · ${group.track_title}`
+    : viewingTrackId && group
+    ? group.track_title
+    : null;
 
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9] flex font-sans">
@@ -1292,34 +2071,38 @@ export default function StudentDashboardPage() {
 
       <div className="flex-1 flex flex-col overflow-auto min-w-0">
         {/* Top Navbar — University Red Theme matching Dashboard Student hand-drawn design */}
-        <header className="bg-[#B81D24] px-6 lg:px-8 py-4 flex items-center justify-between sticky top-0 z-20 shadow-md">
-          <div className="flex items-center gap-4 min-w-0">
-            {(viewingTrackId || showIdeaPool) && (
+        <header className="bg-[#B81D24] px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 flex items-center justify-between sticky top-0 z-20 shadow-md">
+          <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+            {(viewingTrackId || showIdeaPool || proposalMode) && (
               <button
                 onClick={() => {
-                  setViewingTrackId(null);
-                  setShowIdeaPool(false);
-                  setSelectedIdea(null);
+                  if (proposalMode) {
+                    setProposalMode(null);
+                  } else if (showIdeaPool) {
+                    setShowIdeaPool(false);
+                    setSelectedIdea(null);
+                  } else {
+                    setViewingTrackId(null);
+                  }
                 }}
-                className="text-white/80 hover:text-white cursor-pointer shrink-0 p-1"
-                title="Back to Tracks"
+                className="text-white/80 hover:text-white cursor-pointer shrink-0 p-1 rounded-lg hover:bg-white/10"
+                title="Back"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
             )}
-            {!viewingTrackId && !showIdeaPool && (
-              <button
-                className="lg:hidden p-1.5 text-red-200 hover:text-white cursor-pointer"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-            )}
+            <button
+              className="lg:hidden p-1.5 text-red-100 hover:text-white hover:bg-white/10 rounded-lg cursor-pointer shrink-0"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label="Toggle navigation menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
             <div className="min-w-0">
-              <h1 className="text-xl md:text-2xl font-black text-white tracking-tight leading-tight truncate">
+              <h1 className="text-base sm:text-xl md:text-2xl font-black text-white tracking-tight leading-tight truncate">
                 {topBarTitle}
               </h1>
-              {topBarSub && <p className="text-[11px] text-red-100/90 font-mono truncate">{topBarSub}</p>}
+              {topBarSub && <p className="text-[10px] sm:text-[11px] text-red-100/90 font-mono truncate">{topBarSub}</p>}
             </div>
           </div>
 
@@ -1351,9 +2134,36 @@ export default function StudentDashboardPage() {
           </div>
         )}
 
+        {/* ── PROPOSAL SUBMISSION FULL-PAGE VIEW ── */}
+        {proposalMode && group && (
+          <ProposalSubmissionPage
+            mode={proposalMode}
+            selectedIdea={selectedIdea}
+            supervisors={supervisors}
+            supervisorsLoading={supervisorsLoading}
+            selectedSupervisorId={proposalSupervisorId}
+            onSelectSupervisor={setProposalSupervisorId}
+            form={proposalForm}
+            setForm={setProposalForm}
+            techInput={proposalTechInput}
+            setTechInput={setProposalTechInput}
+            techSuggestions={proposalTechSuggestions}
+            setTechSuggestions={setProposalTechSuggestions}
+            proposeFile={proposalFile}
+            setProposeFile={setProposalFile}
+            existingDocUrl={uploadedDocUrl}
+            existingDocName={uploadedDocName}
+            onBack={() => {
+              setProposalMode(null);
+            }}
+            onSubmit={handleSubmitProposal}
+            submitting={isSubmittingProposal}
+          />
+        )}
+
         {/* ── IDEA POOL VIEW (Matching After student click Choose from pool.jpeg) ── */}
-        {showIdeaPool && (
-          <div className="flex-1 p-6 space-y-5 max-w-6xl mx-auto w-full">
+        {!proposalMode && showIdeaPool && (
+          <div className="flex-1 p-3.5 sm:p-6 space-y-4 sm:space-y-5 max-w-6xl mx-auto w-full">
             {selectedIdea ? (
               <div className="space-y-5 max-w-3xl mx-auto w-full">
                 <button
@@ -1428,65 +2238,30 @@ export default function StudentDashboardPage() {
                   )}
                 </div>
 
-                {/* Solution Proposal Section */}
+                {/* Solution Proposal Action Banner */}
                 {group && !group.latest_proposal && (
-                  <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-6 space-y-4">
-                    <h3 className="text-sm font-black text-slate-900">Choose Idea & Propose Solution</h3>
-                    <p className="text-[11px] text-slate-500">
-                      You can optionally describe your implementation approach before requesting the supervisor.
-                    </p>
-                    <textarea
-                      value={ideaSolutionDesc}
-                      onChange={(e) => setIdeaSolutionDesc(e.target.value)}
-                      placeholder="Outline your approach, architecture, or custom features for this idea..."
-                      rows={3}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-[#B81D24] resize-none"
-                    />
-                    <div className="border-2 border-dashed border-slate-200 rounded-lg p-3 text-center">
-                      <label className="cursor-pointer text-xs font-bold text-slate-500 hover:text-[#B81D24]">
-                        <Paperclip className="w-3.5 h-3.5 inline mr-1" />
-                        {ideaSolutionFile ? ideaSolutionFile.name : 'Attach Solution Document (optional)'}
-                        <input
-                          type="file"
-                          className="hidden"
-                          onChange={(e) => setIdeaSolutionFile(e.target.files?.[0] || null)}
-                          accept=".pdf,.doc,.docx"
-                        />
-                      </label>
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-4 sm:p-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+                    <div>
+                      <h3 className="text-sm font-black text-slate-900">Want to work on this idea?</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Proceed to submit your proposed technical solution and request {selectedIdea.supervisor_name} as your project mentor.
+                      </p>
                     </div>
-                    <div className="flex justify-end gap-2 pt-2">
-                      <button
-                        onClick={() => setSelectedIdea(null)}
-                        className="px-4 py-2 text-slate-600 text-xs font-bold hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleSubmitIdeaProposal}
-                        disabled={isSubmittingIdeaProposal}
-                        className="px-5 py-2 bg-[#B81D24] hover:bg-[#9E181E] disabled:opacity-50 text-white text-xs font-bold rounded-lg cursor-pointer flex items-center gap-1.5 transition-colors"
-                      >
-                        {isSubmittingIdeaProposal ? (
-                          <>
-                            <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            Sending...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="w-3 h-3" />
-                            Choose Idea and Propose Solution
-                          </>
-                        )}
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => handleStartPoolProposal(selectedIdea)}
+                      className="w-full sm:w-auto justify-center px-5 py-2.5 bg-[#B81D24] hover:bg-[#9E181E] text-white text-xs font-bold rounded-xl cursor-pointer flex items-center gap-2 transition-colors shadow-sm text-center"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Adopt Idea & Propose Solution
+                    </button>
                   </div>
                 )}
               </div>
             ) : (
               <>
                 {/* Search & Filter Header */}
-                <div className="flex items-center gap-3 flex-wrap">
-                  <div className="relative flex-1 min-w-[220px]">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                  <div className="relative flex-1 min-w-0">
                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                       value={ideaSearch}
@@ -1495,29 +2270,31 @@ export default function StudentDashboardPage() {
                       className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-[#B81D24]"
                     />
                   </div>
-                  <select
-                    value={ideaSort}
-                    onChange={(e) => setIdeaSort(e.target.value as 'newest' | 'oldest' | 'faculty')}
-                    className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#B81D24]"
-                  >
-                    <option value="newest">Newest First</option>
-                    <option value="oldest">Oldest First</option>
-                    <option value="faculty">By Faculty Name</option>
-                  </select>
-                  {uniqueFaculties.length > 0 && (
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     <select
-                      value={ideaFilterFaculty}
-                      onChange={(e) => setIdeaFilterFaculty(e.target.value)}
-                      className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#B81D24]"
+                      value={ideaSort}
+                      onChange={(e) => setIdeaSort(e.target.value as 'newest' | 'oldest' | 'faculty')}
+                      className="flex-1 sm:flex-initial px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#B81D24]"
                     >
-                      <option value="">All Faculty</option>
-                      {uniqueFaculties.map((f) => (
-                        <option key={f} value={f}>
-                          {f}
-                        </option>
-                      ))}
+                      <option value="newest">Newest First</option>
+                      <option value="oldest">Oldest First</option>
+                      <option value="faculty">By Faculty</option>
                     </select>
-                  )}
+                    {uniqueFaculties.length > 0 && (
+                      <select
+                        value={ideaFilterFaculty}
+                        onChange={(e) => setIdeaFilterFaculty(e.target.value)}
+                        className="flex-1 sm:flex-initial px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#B81D24]"
+                      >
+                        <option value="">All Faculty</option>
+                        {uniqueFaculties.map((f) => (
+                          <option key={f} value={f}>
+                            {f}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
                 </div>
 
                 {ideasLoading ? (
@@ -1532,42 +2309,76 @@ export default function StudentDashboardPage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {filteredIdeas.map((idea) => (
-                      <div
-                        key={idea.id}
-                        className="bg-white rounded-xl border border-slate-200 shadow-xs p-5 flex flex-col gap-3 hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Avatar url={idea.supervisor_avatar} name={idea.supervisor_name} size={9} />
-                          <div className="min-w-0">
-                            <p className="text-xs font-black text-slate-900 truncate">{idea.supervisor_name}</p>
-                            {idea.supervisor_designation && (
-                              <p className="text-[10px] text-slate-400 truncate">{idea.supervisor_designation}</p>
+                    {filteredIdeas.map((idea) => {
+                      const sup = supervisors.find((s) => s.id === idea.supervisor || s.full_name === idea.supervisor_name);
+                      const maxG = sup?.max_groups || 10;
+                      const actG = sup?.active_groups || 0;
+                      const isSupFull = sup ? (sup.is_quota_full || (sup.available_slots !== undefined && sup.available_slots <= 0) || actG >= maxG || !sup.is_accepting) : false;
+
+                      return (
+                        <div
+                          key={idea.id}
+                          className="bg-white rounded-xl border border-slate-200 shadow-xs p-5 flex flex-col gap-3 hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Avatar url={idea.supervisor_avatar} name={idea.supervisor_name} size={9} />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-black text-slate-900 truncate">{idea.supervisor_name}</p>
+                              {idea.supervisor_designation && (
+                                <p className="text-[10px] text-slate-400 truncate">{idea.supervisor_designation}</p>
+                              )}
+                            </div>
+                            {isSupFull && (
+                              <span className="px-1.5 py-0.5 bg-red-100 text-[#B81D24] text-[8px] font-black uppercase rounded shrink-0">
+                                Full ({actG}/{maxG})
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex-1">
+                            <h3 className="text-sm font-black text-slate-900 leading-snug mb-1">{idea.title}</h3>
+                            <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+                              {idea.problem_statement}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {idea.domain && (
+                              <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[9px] font-black uppercase rounded border border-blue-100">
+                                {idea.domain}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setSelectedIdea(idea)}
+                              className="flex-1 flex items-center justify-center py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                            >
+                              View Details
+                            </button>
+                            {isSupFull ? (
+                              <button
+                                disabled
+                                title={`Faculty supervisor ${idea.supervisor_name} has reached maximum group quota (${actG}/${maxG})`}
+                                className="flex-1 flex items-center justify-center gap-1 py-2 bg-slate-100 text-slate-400 text-xs font-bold rounded-lg cursor-not-allowed"
+                              >
+                                <Ban className="w-3 h-3" />
+                                Quota Full
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleStartPoolProposal(idea)}
+                                className="flex-1 flex items-center justify-center gap-1 py-2 bg-[#B81D24] hover:bg-[#9E181E] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                              >
+                                <Sparkles className="w-3 h-3" />
+                                Adopt & Propose
+                              </button>
                             )}
                           </div>
                         </div>
-
-                        <div className="flex-1">
-                          <h3 className="text-sm font-black text-slate-900 leading-snug mb-1">{idea.title}</h3>
-                          <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-                            {idea.problem_statement}
-                          </p>
-                        </div>
-
-                        {idea.domain && (
-                          <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[9px] font-black uppercase rounded border border-blue-100 self-start">
-                            {idea.domain}
-                          </span>
-                        )}
-
-                        <button
-                          onClick={() => setSelectedIdea(idea)}
-                          className="w-full flex items-center justify-center gap-1.5 py-2 border border-slate-200 hover:bg-[#B81D24] hover:text-white hover:border-[#B81D24] text-slate-700 text-xs font-bold rounded-lg transition-colors cursor-pointer"
-                        >
-                          View Details
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </>
@@ -1576,11 +2387,34 @@ export default function StudentDashboardPage() {
         )}
 
         {/* ── GROUP DETAIL VIEW (Matching UI After Student clicks view.jpeg) ── */}
-        {!showIdeaPool && viewingTrackId && group && (
-          <div className="flex-1 p-6 space-y-5 max-w-5xl mx-auto w-full">
+        {!proposalMode && !showIdeaPool && viewingTrackId && group && (
+          <div className="flex-1 p-3.5 sm:p-6 space-y-4 sm:space-y-5 max-w-5xl mx-auto w-full">
             {/* Box 1: Team Member Details */}
-            <Section title="Team member details">
-              <div className="flex items-center gap-5 flex-wrap">
+            <Section
+              title="Team member details"
+              action={
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-semibold text-slate-500">
+                    {group.members.length} / {maxGroupCapacity} members
+                  </span>
+                  {isLeader && (
+                    <button
+                      onClick={() => setIsJoinRequestsModalOpen(true)}
+                      className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold rounded-lg cursor-pointer flex items-center gap-1.5 transition-colors shadow-2xs relative"
+                    >
+                      <UserPlus className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Join Requests</span>
+                      {pendingJoinRequests.length > 0 && (
+                        <span className="px-1.5 py-0.2 bg-[#B81D24] text-white text-[9px] font-black rounded-full animate-pulse">
+                          {pendingJoinRequests.length}
+                        </span>
+                      )}
+                    </button>
+                  )}
+                </div>
+              }
+            >
+              <div className="flex items-center gap-3 sm:gap-5 flex-wrap">
                 {group.members.map((m) => (
                   <div key={m.id} className="flex flex-col items-center gap-1.5 group/mem">
                     <div className="relative">
@@ -1609,7 +2443,12 @@ export default function StudentDashboardPage() {
                 <div className="flex items-center gap-4 flex-wrap">
                   <Avatar url={group.supervisor_details.avatar_url} name={group.supervisor_details.full_name} size={13} />
                   <div className="min-w-0">
-                    <p className="text-sm font-black text-slate-900">{group.supervisor_details.full_name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-black text-slate-900">{group.supervisor_details.full_name}</p>
+                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-bold rounded-full">
+                        Assigned Supervisor
+                      </span>
+                    </div>
                     <p className="text-xs text-slate-500 font-medium">
                       {group.supervisor_details.designation} · {group.supervisor_details.department}
                     </p>
@@ -1625,22 +2464,56 @@ export default function StudentDashboardPage() {
                     )}
                   </div>
                 </div>
-              ) : (
-                <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <div>
-                    <p className="text-xs font-semibold text-slate-700">No supervisor selected yet.</p>
-                    <p className="text-[11px] text-slate-400">Choose a faculty member to mentor and review your project.</p>
+              ) : group.latest_proposal && group.latest_proposal.status === 'PENDING' ? (
+                <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-xl space-y-3">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+                      <p className="text-xs font-bold text-amber-900 uppercase tracking-wide">
+                        Supervisor Request Pending Faculty Approval
+                      </p>
+                    </div>
+                    <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold rounded-full">
+                      Under Review
+                    </span>
                   </div>
-                  <button
-                    onClick={() => {
-                      loadSupervisors();
-                      setShowSupervisorModal(true);
-                    }}
-                    className="px-4 py-2 border border-slate-300 hover:border-[#B81D24] hover:text-[#B81D24] text-slate-700 text-xs font-bold rounded-lg hover:bg-red-50 cursor-pointer flex items-center gap-1.5 transition-colors"
-                  >
-                    <UserPlus className="w-3.5 h-3.5" />
-                    Choose Your Supervisor
-                  </button>
+                  <p className="text-[11px] text-amber-800 leading-relaxed">
+                    Your project proposal has been sent to{' '}
+                    <span className="font-bold">
+                      {group.latest_proposal.supervisor_name ||
+                        group.latest_proposal.supervisor_details?.full_name ||
+                        'the faculty mentor'}
+                    </span>
+                    . Once they review and accept your request, they will be confirmed as your supervisor.
+                  </p>
+                  {group.latest_proposal.supervisor_details && (
+                    <div className="flex items-center gap-3 pt-2 border-t border-amber-200/50">
+                      <Avatar
+                        url={group.latest_proposal.supervisor_details.avatar_url}
+                        name={group.latest_proposal.supervisor_details.full_name}
+                        size={10}
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-900">
+                          {group.latest_proposal.supervisor_details.full_name}
+                        </p>
+                        <p className="text-[10px] text-slate-500">
+                          {group.latest_proposal.supervisor_details.designation} ·{' '}
+                          {group.latest_proposal.supervisor_details.department}
+                        </p>
+                        <p className="text-[10px] text-blue-600 font-mono">
+                          {group.latest_proposal.supervisor_details.email}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="py-2">
+                  <p className="text-xs font-bold text-slate-700">No supervisor assigned yet.</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Your supervisor will be chosen when you propose your project idea below. Once the faculty mentor accepts your request, they will appear here.
+                  </p>
                 </div>
               )}
             </Section>
@@ -1648,15 +2521,20 @@ export default function StudentDashboardPage() {
             {/* Box 3: Project Title (Propose Idea or Choose from pool) */}
             <Section title="Project Title">
               {group.latest_proposal ? (
-                <div className="space-y-3">
+                <div className="space-y-3.5">
                   <div className="flex items-start justify-between flex-wrap gap-2">
                     <div>
                       <h3 className="text-base font-black text-slate-900">{group.latest_proposal.title}</h3>
-                      {group.latest_proposal.domain && (
-                        <span className="inline-block mt-1 px-2 py-0.5 bg-blue-50 text-blue-700 text-[9px] font-black uppercase rounded border border-blue-100">
-                          {group.latest_proposal.domain}
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {group.latest_proposal.domain && (
+                          <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[9px] font-black uppercase rounded border border-blue-100">
+                            {group.latest_proposal.domain}
+                          </span>
+                        )}
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          Submitted on {formatDate(group.latest_proposal.created_at)}
                         </span>
-                      )}
+                      </div>
                     </div>
                     <span
                       className={`px-2.5 py-0.5 text-[10px] font-black uppercase rounded-full ${
@@ -1675,9 +2553,48 @@ export default function StudentDashboardPage() {
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3.5 rounded-lg border border-slate-100">
-                    {group.latest_proposal.problem_statement}
-                  </p>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Problem Statement</p>
+                    <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3.5 rounded-lg border border-slate-100">
+                      {group.latest_proposal.problem_statement}
+                    </p>
+                  </div>
+
+                  {group.latest_proposal.solution && (
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Proposed Solution / Approach</p>
+                      <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3.5 rounded-lg border border-slate-100">
+                        {group.latest_proposal.solution}
+                      </p>
+                    </div>
+                  )}
+
+                  {group.latest_proposal.technologies && group.latest_proposal.technologies.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Technologies</p>
+                      <div className="flex flex-wrap gap-1">
+                        {group.latest_proposal.technologies.map((t) => (
+                          <span key={t} className="px-2 py-0.5 bg-slate-100 text-slate-700 text-[10px] font-bold rounded">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {group.latest_proposal.supporting_doc_url && (
+                    <div className="pt-1">
+                      <a
+                        href={group.latest_proposal.supporting_doc_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        <Paperclip className="w-3.5 h-3.5" />
+                        {group.latest_proposal.supporting_doc_name || 'Download Attached Supporting Document'}
+                      </a>
+                    </div>
+                  )}
 
                   {group.latest_proposal.supervisor_feedback && (
                     <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-800">
@@ -1687,37 +2604,40 @@ export default function StudentDashboardPage() {
                   )}
 
                   {group.latest_proposal.status === 'REJECTED' && (
-                    <div className="flex gap-2 pt-1">
+                    <div className="flex gap-2 pt-2 border-t border-slate-100">
                       <button
-                        onClick={() => setShowProposeModal(true)}
-                        className="px-3 py-1.5 bg-[#B81D24] text-white text-xs font-bold rounded-lg cursor-pointer"
+                        onClick={handleOpenCustomProposal}
+                        className="px-3.5 py-1.5 bg-[#B81D24] text-white text-xs font-bold rounded-lg hover:bg-[#9E181E] cursor-pointer flex items-center gap-1.5 transition-colors"
                       >
+                        <Lightbulb className="w-3.5 h-3.5" />
                         Re-propose Idea
                       </button>
                       <button
                         onClick={() => {
                           setShowIdeaPool(true);
                           loadIdeas();
+                          loadSupervisors();
                         }}
-                        className="px-3 py-1.5 border border-slate-300 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-50 cursor-pointer"
+                        className="px-3.5 py-1.5 border border-slate-300 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-50 cursor-pointer flex items-center gap-1.5 transition-colors"
                       >
+                        <BookMarked className="w-3.5 h-3.5" />
                         Choose from Pool
                       </button>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="flex items-center justify-between gap-4 flex-wrap py-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 py-2">
                   <div>
                     <p className="text-xs font-bold text-slate-800">No project idea finalized yet</p>
                     <p className="text-[11px] text-slate-400">
                       Propose your own custom idea or select one from the faculty idea pool.
                     </p>
                   </div>
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
                     <button
-                      onClick={() => setShowProposeModal(true)}
-                      className="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-50 cursor-pointer flex items-center gap-1.5 transition-colors"
+                      onClick={handleOpenCustomProposal}
+                      className="w-full sm:w-auto justify-center px-4 py-2 border border-slate-300 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-50 cursor-pointer flex items-center gap-1.5 transition-colors text-center"
                     >
                       <Lightbulb className="w-3.5 h-3.5" />
                       Propose Idea
@@ -1726,8 +2646,9 @@ export default function StudentDashboardPage() {
                       onClick={() => {
                         setShowIdeaPool(true);
                         loadIdeas();
+                        loadSupervisors();
                       }}
-                      className="px-4 py-2 bg-[#B81D24] hover:bg-[#9E181E] text-white text-xs font-bold rounded-lg cursor-pointer flex items-center gap-1.5 transition-colors"
+                      className="w-full sm:w-auto justify-center px-4 py-2 bg-[#B81D24] hover:bg-[#9E181E] text-white text-xs font-bold rounded-lg cursor-pointer flex items-center gap-1.5 transition-colors text-center"
                     >
                       <BookMarked className="w-3.5 h-3.5" />
                       Choose from pool
@@ -1737,9 +2658,129 @@ export default function StudentDashboardPage() {
               )}
             </Section>
 
-            {/* Box 4: Deliverables Table (Matching UI After Student clicks view.jpeg) */}
+            {/* Box 4: Deliverables Table (Responsive: Mobile Cards + Desktop Table) */}
             <Section title="Deliverables">
-              <div className="overflow-x-auto">
+              {/* Mobile View: Clean Card List */}
+              <div className="md:hidden space-y-3">
+                {(['PPT', 'SYNOPSIS', 'REPORT', 'GITHUB'] as const).map((type, idx) => {
+                  const dl = deadlines.find((d) => d.deadline_type === type);
+                  const submitted =
+                    type === 'SYNOPSIS'
+                      ? !!group.submission?.synopsis_url
+                      : type === 'PPT'
+                      ? !!group.submission?.ppt_url
+                      : type === 'REPORT'
+                      ? !!group.submission?.report_url
+                      : !!group.submission?.github_repo_url;
+
+                  const subUrl =
+                    type === 'SYNOPSIS'
+                      ? group.submission?.synopsis_url
+                      : type === 'PPT'
+                      ? group.submission?.ppt_url
+                      : type === 'REPORT'
+                      ? group.submission?.report_url
+                      : group.submission?.github_repo_url;
+
+                  const subAt =
+                    type === 'SYNOPSIS'
+                      ? group.submission?.synopsis_submitted_at
+                      : type === 'PPT'
+                      ? group.submission?.ppt_submitted_at
+                      : type === 'REPORT'
+                      ? group.submission?.report_submitted_at
+                      : null;
+
+                  const label =
+                    type === 'PPT'
+                      ? 'PPT Presentation'
+                      : type === 'SYNOPSIS'
+                      ? 'Synopsis'
+                      : type === 'REPORT'
+                      ? 'Final Report'
+                      : 'GitHub Repo';
+
+                  return (
+                    <div
+                      key={type}
+                      className="p-3.5 bg-slate-50/80 border border-slate-200/90 rounded-xl space-y-2.5"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-mono font-bold">
+                            {idx + 1}
+                          </span>
+                          <span className="text-xs font-bold text-slate-900">{label}</span>
+                        </div>
+                        <span
+                          className={`px-2 py-0.5 text-[9px] font-black uppercase rounded-full ${
+                            submitted ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
+                          }`}
+                        >
+                          {submitted ? 'Delivered' : 'Not Delivered'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1.5 border-t border-slate-200/60">
+                        <span>
+                          <span className="font-semibold text-slate-600">Deadline: </span>
+                          <span className="font-mono">{dl ? formatDate(dl.due_date) : '—'}</span>
+                        </span>
+                        <span>
+                          {submitted ? (
+                            subAt ? `Submitted ${formatDate(subAt)}` : 'Submitted'
+                          ) : dl?.is_passed ? (
+                            <span className="text-rose-500 font-semibold">Overdue</span>
+                          ) : (
+                            'Pending'
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        {subUrl && (
+                          <a
+                            href={subUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex-1 py-1.5 px-3 bg-white border border-slate-200 hover:border-blue-400 text-blue-600 hover:text-blue-800 text-[11px] font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-2xs"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            View
+                          </a>
+                        )}
+                        {type !== 'GITHUB' ? (
+                          <button
+                            onClick={() => {
+                              setSelectedDeliverableType(type);
+                              setSelectedFile(null);
+                              setIsUploadModalOpen(true);
+                            }}
+                            className="flex-1 py-1.5 px-3 bg-[#B81D24] hover:bg-[#9E181E] text-white text-[11px] font-bold rounded-lg cursor-pointer flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+                          >
+                            <Upload className="w-3 h-3" />
+                            {submitted ? 'Replace File' : 'Upload File'}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setLinkInputValue(group.submission?.github_repo_url || '');
+                              setIsLinkModalOpen(true);
+                            }}
+                            className="flex-1 py-1.5 px-3 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold rounded-lg cursor-pointer flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+                          >
+                            <Code2 className="w-3.5 h-3.5" />
+                            {submitted ? 'Update URL' : 'Link GitHub'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-slate-200 text-[10px] font-black uppercase text-slate-400 tracking-wider">
@@ -1869,7 +2910,7 @@ export default function StudentDashboardPage() {
 
         {/* ── TRACKS TAB (Matching Dashboard Student.jpeg) ── */}
         {!showIdeaPool && !viewingTrackId && activeTab === 'tracks' && (
-          <div className="flex-1 p-6 max-w-6xl mx-auto w-full">
+          <div className="flex-1 p-3.5 sm:p-6 max-w-6xl mx-auto w-full">
             {loading ? (
               <div className="flex justify-center py-32">
                 <div className="w-8 h-8 border-[3px] border-slate-200 border-t-[#B81D24] rounded-full animate-spin" />
@@ -1988,86 +3029,119 @@ export default function StudentDashboardPage() {
           </div>
         )}
 
-        {/* ── DELIVERABLES TAB ── */}
+        {/* ── FORMATS TAB ── */}
         {!showIdeaPool && !viewingTrackId && activeTab === 'deliverables' && (
-          <div className="flex-1 p-6 space-y-5 max-w-5xl mx-auto w-full">
-            {loading ? (
-              <div className="flex justify-center py-32">
-                <div className="w-8 h-8 border-[3px] border-slate-200 border-t-[#B81D24] rounded-full animate-spin" />
-              </div>
-            ) : !group ? (
-              <div className="flex flex-col items-center justify-center py-32 gap-3 text-center">
-                <Users className="w-12 h-12 text-slate-300" />
-                <p className="text-sm font-bold text-slate-700">Not in a group yet</p>
-                <p className="text-xs text-slate-400">Join a project track first to access deliverable formats.</p>
-                <button
-                  onClick={() => setActiveTab('tracks')}
-                  className="mt-2 px-4 py-2 bg-[#B81D24] text-white text-xs font-bold rounded-xl cursor-pointer"
-                >
-                  Go to My Tracks
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="bg-white border border-slate-200 rounded-xl p-5 flex items-center justify-between shadow-xs flex-wrap gap-4">
-                  <div className="flex items-center gap-3">
-                    <Avatar url={user?.avatar_url} name={user?.full_name} size={11} />
-                    <div>
-                      <p className="text-sm font-black text-slate-900">{group.name}</p>
-                      <p className="text-[11px] text-slate-500 font-mono">
-                        {group.track_title} · {user?.university_id}
-                        {isLeader && (
-                          <span className="ml-2 px-1.5 py-0.2 bg-amber-100 text-amber-700 font-bold rounded text-[9px] uppercase">
-                            Leader
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-bold text-slate-600">
-                      {deliverablesProgress.completed} / {deliverablesProgress.total} completed
-                    </span>
-                    {myTrack && (
-                      <button
-                        onClick={() => setViewingTrackId(myTrack.id)}
-                        className="px-3.5 py-2 bg-[#B81D24] text-white text-xs font-bold rounded-xl cursor-pointer flex items-center gap-1.5"
-                      >
-                        <BookOpen className="w-3.5 h-3.5" />
-                        View Group
-                      </button>
-                    )}
-                  </div>
-                </div>
+          <div className="flex-1 p-3.5 sm:p-6 space-y-4 sm:space-y-6 max-w-5xl mx-auto w-full">
 
-                {deadlines.filter((d) => d.template_url).length > 0 && (
-                  <div>
-                    <p className="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-3">Format Templates</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                      {deadlines
-                        .filter((d) => d.template_url)
-                        .map((d) => (
-                          <div key={d.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs space-y-2">
-                            <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
-                              {d.deadline_type}
-                            </span>
-                            <p className="text-xs font-bold text-slate-800">{d.title}</p>
-                            <a
-                              href={d.template_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex items-center justify-center gap-1.5 py-2 bg-slate-50 hover:bg-[#B81D24] hover:text-white text-slate-700 text-xs font-bold rounded-lg border border-slate-200 transition-colors cursor-pointer"
-                            >
-                              <Download className="w-3.5 h-3.5" />
-                              {d.template_filename || 'Download Template'}
-                            </a>
-                          </div>
-                        ))}
-                    </div>
+            {(() => {
+              const formatDeadlines = deadlines.filter((d) => d.deadline_type !== 'GITHUB');
+
+              if (formatDeadlines.length === 0) {
+                return (
+                  <div className="bg-white border border-slate-200 rounded-xl p-8 text-center space-y-2">
+                    <p className="text-sm font-semibold text-slate-800">No format guidelines published yet</p>
+                    <p className="text-xs text-slate-500">
+                      Format templates and typography guidelines will appear here once configured by the Head of Department.
+                    </p>
                   </div>
-                )}
-              </>
-            )}
+                );
+              }
+
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                  {formatDeadlines.map((dl) => {
+                    const hasMetrics =
+                      dl.font_family ||
+                      dl.typography ||
+                      dl.spacing_alignment ||
+                      dl.page_margins ||
+                      dl.page_limit ||
+                      dl.file_format;
+
+                    return (
+                      <div
+                        key={dl.id || dl.deadline_type}
+                        className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-xs flex flex-col justify-between space-y-3 hover:border-slate-300 transition-colors"
+                      >
+                        <div className="space-y-3">
+                          <h3 className="text-sm font-bold text-slate-900">
+                            {dl.title || dl.deadline_type}
+                          </h3>
+
+                          {/* Metrics Box */}
+                          {hasMetrics && (
+                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 space-y-1.5 text-[11px]">
+                              {dl.font_family && (
+                                <div className="flex items-center justify-between text-slate-700">
+                                  <span className="text-slate-500 font-medium">Font Family</span>
+                                  <span className="font-semibold text-slate-900">{dl.font_family}</span>
+                                </div>
+                              )}
+                              {dl.typography && (
+                                <div className="flex items-center justify-between text-slate-700">
+                                  <span className="text-slate-500 font-medium">Typography</span>
+                                  <span className="font-mono text-[10px] text-slate-800">{dl.typography}</span>
+                                </div>
+                              )}
+                              {dl.spacing_alignment && (
+                                <div className="flex items-center justify-between text-slate-700">
+                                  <span className="text-slate-500 font-medium">Spacing & Alignment</span>
+                                  <span className="text-slate-800">{dl.spacing_alignment}</span>
+                                </div>
+                              )}
+                              {dl.page_margins && (
+                                <div className="flex items-center justify-between text-slate-700">
+                                  <span className="text-slate-500 font-medium">Page Margins</span>
+                                  <span className="font-mono text-[10px] text-slate-800">{dl.page_margins}</span>
+                                </div>
+                              )}
+                              {dl.page_limit && (
+                                <div className="flex items-center justify-between text-slate-700">
+                                  <span className="text-slate-500 font-medium">No. of Pages</span>
+                                  <span className="font-semibold text-slate-900">{dl.page_limit}</span>
+                                </div>
+                              )}
+                              {dl.file_format && (
+                                <div className="flex items-center justify-between text-slate-700">
+                                  <span className="text-slate-500 font-medium">Type</span>
+                                  <span className="font-mono font-bold text-slate-900 text-[10px]">{dl.file_format}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* HOD Instruction (if present) */}
+                          {dl.instructions && (
+                            <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700">
+                              <span className="font-bold text-slate-900">HOD Instruction: </span>
+                              {dl.instructions}
+                            </div>
+                          )}
+                        </div>
+
+                        {dl.template_url ? (
+                          <a
+                            href={dl.template_url}
+                            download={dl.template_filename || `${dl.deadline_type}_Format`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-full py-2.5 px-4 bg-[#B81D24] hover:bg-[#9E181E] text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            Download Format
+                          </a>
+                        ) : (
+                          <div className="w-full py-2.5 px-4 bg-slate-100 text-slate-400 text-xs font-medium rounded-lg flex items-center justify-center gap-2 border border-slate-200 select-none">
+                            <Download className="w-3.5 h-3.5 text-slate-300" />
+                            Format File Pending Upload
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>
@@ -2144,49 +3218,103 @@ export default function StudentDashboardPage() {
               </div>
             ) : (
               <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                {trackGroups.map((g) => (
-                  <div
-                    key={g.id}
-                    className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-200 hover:border-slate-300 transition-all gap-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-slate-900 truncate">{g.name}</p>
-                      <p className="text-[10px] text-slate-500">
-                        {g.members.length} member{g.members.length !== 1 ? 's' : ''}
-                      </p>
-                      <div className="flex items-center gap-1 mt-1.5">
-                        {g.members.slice(0, 4).map((m) => (
-                          <Avatar key={m.id} url={m.avatar_url} name={m.full_name} size={6} />
-                        ))}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleJoinGroup(g.id)}
-                      disabled={joiningGroupId === g.id}
-                      className="px-3 py-1.5 bg-slate-900 hover:bg-slate-700 disabled:opacity-50 text-white text-[10px] font-bold rounded-lg cursor-pointer flex items-center gap-1 shrink-0 transition-colors"
+                {trackGroups.map((g) => {
+                  const maxCap = g.max_group_size || 4;
+                  const isFull = g.members.length >= maxCap;
+                  const myReq = g.my_join_request;
+                  const isPending = myReq?.status === 'PENDING';
+                  const isJoined = g.members.some(
+                    (m) => m.university_id === user?.university_id || m.email === user?.email
+                  );
+
+                  return (
+                    <div
+                      key={g.id}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-200 hover:border-slate-300 transition-all gap-3"
                     >
-                      {joiningGroupId === g.id ? (
-                        <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-xs font-bold text-slate-900 truncate">{g.name}</p>
+                          {isJoined ? (
+                            <span className="px-1.5 py-0.2 bg-blue-100 text-blue-800 text-[9px] font-bold rounded">
+                              Joined
+                            </span>
+                          ) : isPending ? (
+                            <span className="px-1.5 py-0.2 bg-amber-100 text-amber-800 text-[9px] font-bold rounded">
+                              Request Pending
+                            </span>
+                          ) : isFull ? (
+                            <span className="px-1.5 py-0.2 bg-red-100 text-[#B81D24] text-[9px] font-bold rounded">
+                              Full
+                            </span>
+                          ) : (
+                            <span className="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 text-[9px] font-bold rounded">
+                              Open
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-slate-500">
+                          {g.members.length} / {maxCap} members
+                        </p>
+                        <div className="flex items-center gap-1 mt-1.5">
+                          {g.members.slice(0, 4).map((m) => (
+                            <Avatar key={m.id} url={m.avatar_url} name={m.full_name} size={6} />
+                          ))}
+                        </div>
+                      </div>
+
+                      {isJoined ? (
+                        <span className="w-full sm:w-auto text-center px-3 py-1.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded-lg select-none">
+                          Your Team
+                        </span>
+                      ) : isPending ? (
+                        <div className="flex items-center justify-between sm:justify-end gap-1.5 w-full sm:w-auto">
+                          <span className="px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold rounded-lg flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-amber-600" />
+                            Request Pending
+                          </span>
+                          <button
+                            onClick={() => handleCancelJoinRequest(g.id, myReq!.id)}
+                            disabled={cancellingRequestId === myReq!.id}
+                            className="px-2.5 py-1 text-slate-600 hover:text-red-700 hover:bg-red-50 text-[10px] font-bold rounded-lg transition-colors cursor-pointer border border-slate-200 disabled:opacity-50"
+                          >
+                            {cancellingRequestId === myReq!.id ? 'Cancelling...' : 'Cancel'}
+                          </button>
+                        </div>
+                      ) : isFull ? (
+                        <span className="w-full sm:w-auto text-center px-3 py-1.5 bg-slate-200 text-slate-500 text-[10px] font-bold rounded-lg select-none">
+                          Group Full
+                        </span>
                       ) : (
-                        <>
-                          <UserPlus className="w-3 h-3" />
-                          Request to Join
-                        </>
+                        <button
+                          onClick={() => handleJoinGroup(g.id)}
+                          disabled={joiningGroupId === g.id}
+                          className="w-full sm:w-auto justify-center px-3 py-2 sm:py-1.5 bg-slate-900 hover:bg-slate-700 disabled:opacity-50 text-white text-[10px] font-bold rounded-lg cursor-pointer flex items-center gap-1 shrink-0 transition-colors"
+                        >
+                          {joiningGroupId === g.id ? (
+                            <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          ) : (
+                            <>
+                              <UserPlus className="w-3 h-3" />
+                              Request to Join
+                            </>
+                          )}
+                        </button>
                       )}
-                    </button>
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
             )}
 
-            <div className="pt-3 border-t border-slate-100 mt-3 flex items-center justify-between">
-              <p className="text-[11px] text-slate-500">Want to lead your own team?</p>
+            <div className="pt-3 border-t border-slate-100 mt-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+              <p className="text-[11px] text-slate-500 text-center sm:text-left">Want to lead your own team?</p>
               <button
                 onClick={() => {
                   setIsJoinListOpen(false);
                   setIsCreateGroupModalOpen(true);
                 }}
-                className="px-3.5 py-1.5 bg-[#B81D24] hover:bg-[#9E181E] text-white text-xs font-bold rounded-lg cursor-pointer flex items-center gap-1.5 transition-colors"
+                className="w-full sm:w-auto justify-center px-3.5 py-2 sm:py-1.5 bg-[#B81D24] hover:bg-[#9E181E] text-white text-xs font-bold rounded-lg cursor-pointer flex items-center gap-1.5 transition-colors text-center"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Create Group
@@ -2196,15 +3324,19 @@ export default function StudentDashboardPage() {
         </Modal>
       )}
 
-      {/* Choose Supervisor Modal */}
-      <ChooseSupervisorModal
-        open={showSupervisorModal}
-        supervisors={supervisors}
-        loading={supervisorsLoading}
-        onClose={() => setShowSupervisorModal(false)}
-        onSelect={handleSelectSupervisor}
-        selectingId={selectingSupervisorId}
-      />
+      {/* Team Join Requests Modal (Leader Only) */}
+      {isJoinRequestsModalOpen && group && (
+        <JoinRequestsModal
+          open={isJoinRequestsModalOpen}
+          onClose={() => setIsJoinRequestsModalOpen(false)}
+          requests={pendingJoinRequests}
+          onRespond={handleRespondJoinRequest}
+          respondingId={respondingRequestId}
+          isGroupFull={isGroupFull}
+          currentMembers={group.members.length}
+          maxMembers={maxGroupCapacity}
+        />
+      )}
 
       {/* Deliverable Upload Modal */}
       <UploadModal
@@ -2226,23 +3358,6 @@ export default function StudentDashboardPage() {
         onSave={handleSaveLink}
         saving={isSavingLink}
       />
-
-      {/* Propose Idea Modal */}
-      {showProposeModal && (
-        <ProposeIdeaModal
-          form={proposeForm}
-          setForm={setProposeForm}
-          techInput={proposeTechInput}
-          setTechInput={setProposeTechInput}
-          techSuggestions={proposeTechSuggestions}
-          setTechSuggestions={setProposeTechSuggestions}
-          proposeFile={proposeFile}
-          setProposeFile={setProposeFile}
-          onClose={() => setShowProposeModal(false)}
-          onSubmit={handleSubmitProposal}
-          submitting={isSubmittingProposal}
-        />
-      )}
     </div>
   );
 }

@@ -32,6 +32,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['role'] = user.role
         token['department'] = user.department
         token['full_name'] = user.get_full_name()
+        token['is_dean'] = bool(user.role == CustomUser.Role.DEAN or (hasattr(user, 'managed_school') and user.managed_school is not None))
+        token['is_hod'] = bool(user.role == CustomUser.Role.HOD or user.managed_departments.exists())
         return token
 
     def validate(self, attrs):
@@ -43,12 +45,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 if supervisor_profile:
                     if supervisor_profile.approval_status == SupervisorProfile.ApprovalStatus.PENDING:
                         raise serializers.ValidationError(
-                            {"detail": "Your faculty registration has been submitted to the Head of Department (HOD) for institutional verification. Your credentials will become active once approved."}
+                            {"detail": "Your faculty registration request has been sent to the System Administrator for verification and approval, not to a Head of Department (HOD). Your credentials will become active once approved by the administrator."}
                         )
                     elif supervisor_profile.approval_status == SupervisorProfile.ApprovalStatus.REJECTED:
                         reason_note = f" Reason: {supervisor_profile.rejection_reason}" if supervisor_profile.rejection_reason else ""
                         raise serializers.ValidationError(
-                            {"detail": f"Your faculty supervisor application was declined by the HOD.{reason_note}"}
+                            {"detail": f"Your faculty supervisor application was declined by the System Administrator.{reason_note}"}
                         )
 
         data = super().validate(attrs)
@@ -112,7 +114,7 @@ class InstitutionalRegisterSerializer(serializers.ModelSerializer):
 
         with transaction.atomic():
             if role == CustomUser.Role.SUPERVISOR:
-                # Faculty supervisor is set to is_active=False until HOD approves
+                # Faculty supervisor is set to is_active=False until Admin approves
                 user = CustomUser.objects.create_user(
                     password=password,
                     role=CustomUser.Role.SUPERVISOR,
@@ -178,6 +180,11 @@ class CurrentUserDetailSerializer(serializers.ModelSerializer):
     full_name          = serializers.CharField(source='get_full_name', read_only=True)
     student_profile    = StudentProfileSerializer(read_only=True)
     supervisor_profile = SupervisorProfileSerializer(read_only=True)
+    is_dean            = serializers.SerializerMethodField()
+    is_hod             = serializers.SerializerMethodField()
+    dean_school        = serializers.SerializerMethodField()
+    hod_departments    = serializers.SerializerMethodField()
+    available_roles    = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
@@ -195,5 +202,54 @@ class CurrentUserDetailSerializer(serializers.ModelSerializer):
             'is_active',
             'student_profile',
             'supervisor_profile',
+            'is_dean',
+            'is_hod',
+            'dean_school',
+            'hod_departments',
+            'available_roles',
             'created_at',
         )
+
+    def get_is_dean(self, obj):
+        return bool(obj.role == CustomUser.Role.DEAN or (hasattr(obj, 'managed_school') and obj.managed_school is not None))
+
+    def get_is_hod(self, obj):
+        return bool(obj.role == CustomUser.Role.HOD or obj.managed_departments.exists())
+
+    def get_dean_school(self, obj):
+        if hasattr(obj, 'managed_school') and obj.managed_school:
+            return {
+                'id': obj.managed_school.id,
+                'name': obj.managed_school.name,
+                'code': obj.managed_school.code,
+            }
+        return None
+
+    def get_hod_departments(self, obj):
+        return [
+            {
+                'id': d.id,
+                'name': d.name,
+                'code': d.code,
+                'school_id': d.school_id,
+                'school_name': d.school.name,
+                'school_code': d.school.code,
+            }
+            for d in obj.managed_departments.select_related('school').all()
+        ]
+
+    def get_available_roles(self, obj):
+        roles = []
+        if obj.role == CustomUser.Role.ADMIN or obj.is_staff or obj.is_superuser:
+            roles.append('ADMIN')
+        if self.get_is_dean(obj):
+            roles.append('DEAN')
+        if self.get_is_hod(obj):
+            roles.append('HOD')
+        if hasattr(obj, 'supervisor_profile') or obj.role == CustomUser.Role.SUPERVISOR:
+            roles.append('SUPERVISOR')
+        if hasattr(obj, 'student_profile') or obj.role == CustomUser.Role.STUDENT:
+            roles.append('STUDENT')
+        if not roles and obj.role:
+            roles.append(obj.role)
+        return roles

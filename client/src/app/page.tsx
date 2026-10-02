@@ -26,6 +26,9 @@ import {
 import SkillAutocompleteInput from '@/components/SkillAutocompleteInput';
 import { DOMAINS_LIST, TECHNOLOGIES_LIST } from '@/constants/skillsData';
 
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000').replace(/\/api\/?$/, '');
+const API = `${API_BASE}/api`;
+
 
 export interface BCAProfile {
   program: 'BCA';
@@ -76,11 +79,17 @@ export type SemesterNumber = StudentAcademicProfile['semester'];
 export type SectionDesignation = StudentAcademicProfile['section'];
 
 
-export interface SupervisorProfile {
-  department:
-  | 'Department of Computer Applications'
-  | 'Department of Computer Science & Engineering';
+export interface PublicDepartment {
+  id: number;
+  name: string;
+  code: string;
+  school_id: number;
+  school_name: string;
+  school_code: string;
+}
 
+export interface SupervisorProfile {
+  department: string;
   designation:
   | 'Assistant Professor'
   | 'Associate Professor'
@@ -179,18 +188,62 @@ export default function AuthPage() {
   const [isEmailVerified, setIsEmailVerified] = useState<boolean>(false);
   const [resendTimer, setResendTimer] = useState<number>(0);
 
+  const [departmentsList, setDepartmentsList] = useState<PublicDepartment[]>([]);
+  const [loadingDepts, setLoadingDepts] = useState<boolean>(true);
+
   const [selectedProgram, setSelectedProgram] = useState<ProgramName>('BCA');
   const [selectedSpecialization, setSelectedSpecialization] = useState<string>('Core');
   const [selectedSemester, setSelectedSemester] = useState<number>(5);
   const [selectedSection, setSelectedSection] = useState<string>('A');
 
-  const [supDepartment, setSupDepartment] = useState<SupervisorProfile['department']>('Department of Computer Applications');
+  const [supDepartment, setSupDepartment] = useState<string>('');
   const [supDesignation, setSupDesignation] = useState<SupervisorProfile['designation']>('Assistant Professor');
   const [domainInput, setDomainInput] = useState<string>('');
   const [domains, setDomains] = useState<string[]>([]);
   const [techInput, setTechInput] = useState<string>('');
   const [technologies, setTechnologies] = useState<string[]>([]);
   const [maxGroups, setMaxGroups] = useState<number>(5);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const res = await fetch(`${API}/accounts/departments/`);
+        if (res.ok) {
+          const data: PublicDepartment[] = await res.json();
+          setDepartmentsList(data);
+          if (data.length > 0) {
+            setSupDepartment(data[0].name);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load departments from database:', e);
+      } finally {
+        setLoadingDepts(false);
+      }
+    };
+    fetchDepartments();
+  }, []);
+
+  const availablePrograms = useMemo(() => {
+    const allProgs = Object.keys(ACADEMIC_PROGRAMS) as ProgramName[];
+    if (departmentsList.length === 0) return allProgs;
+    const filtered = allProgs.filter((prog) => {
+      const progDept = ACADEMIC_PROGRAMS[prog].department;
+      return departmentsList.some(
+        (d) => d.name.trim().toLowerCase() === progDept.trim().toLowerCase()
+      );
+    });
+    return filtered.length > 0 ? filtered : allProgs;
+  }, [departmentsList]);
+
+  useEffect(() => {
+    if (availablePrograms.length > 0 && !availablePrograms.includes(selectedProgram)) {
+      const nextProg = availablePrograms[0];
+      setSelectedProgram(nextProg);
+      setSelectedSpecialization(ACADEMIC_PROGRAMS[nextProg].specializations[0]);
+      setSelectedSection(ACADEMIC_PROGRAMS[nextProg].sections[0]);
+    }
+  }, [availablePrograms, selectedProgram]);
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -252,7 +305,7 @@ export default function AuthPage() {
     setIsSendingOtp(true);
     try {
       const full = `${firstName.trim()} ${lastName.trim()}`.trim();
-      const res = await fetch('http://127.0.0.1:8000/api/accounts/otp/send/', {
+      const res = await fetch(`${API}/accounts/otp/send/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: cleanEmail, full_name: full }),
@@ -286,7 +339,7 @@ export default function AuthPage() {
     setErrorMessage('');
     setIsVerifyingOtp(true);
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/accounts/otp/verify/', {
+      const res = await fetch(`${API}/accounts/otp/verify/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: cleanEmail, otp: cleanOtp }),
@@ -442,7 +495,7 @@ export default function AuthPage() {
     }
     setLoading(true);
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+      const res = await fetch(`${API}/auth/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -471,6 +524,8 @@ export default function AuthPage() {
           router.replace('/dashboard/hod');
         } else if (userRole === 'DEAN') {
           router.replace('/dashboard/dean');
+        } else if (userRole === 'ADMIN') {
+          router.replace('/dashboard/admin');
         } else {
           router.replace('/dashboard');
         }
@@ -504,10 +559,17 @@ export default function AuthPage() {
     setLoading(true);
     try {
 
+      if (role === 'SUPERVISOR' && !supDepartment.trim()) {
+        setErrorMessage('Please select an academic department configured in the university.');
+        setCurrentStep(3);
+        setLoading(false);
+        return;
+      }
+
       const resolvedDepartment =
         role === 'STUDENT'
           ? getDepartmentFromProgram(selectedProgram)
-          : supDepartment;
+          : supDepartment.trim();
 
       // 1. Upload portrait to Cloudinary if available
       let uploadedAvatarUrl = '';
@@ -515,7 +577,7 @@ export default function AuthPage() {
         try {
           const formData = new FormData();
           formData.append('file', avatarFile);
-          const uploadRes = await fetch('http://127.0.0.1:8000/api/submissions/upload-portrait/', {
+          const uploadRes = await fetch(`${API}/submissions/upload-portrait/`, {
             method: 'POST',
             body: formData,
           });
@@ -547,7 +609,7 @@ export default function AuthPage() {
         avatar_url: uploadedAvatarUrl,
       };
 
-      const res = await fetch('http://127.0.0.1:8000/api/auth/register/', {
+      const res = await fetch(`${API}/auth/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(registrationPayload),
@@ -561,13 +623,13 @@ export default function AuthPage() {
         throw new Error(errorDetails || 'Registration failed. Please review your details.');
       }
 
-      // 3. Supervisors require HOD approval before login
+      // 3. Supervisors require Admin approval before login
       if (role === 'SUPERVISOR') {
         switchAuthMode('signin');
         setCurrentStep(1);
         setPassword('');
         setSuccessMessage(
-          `Faculty registration submitted successfully! Your application has been routed to the Head of Department (HOD) of ${resolvedDepartment} for verification. Your credentials will become active once approved by the HOD.`
+          `Faculty registration submitted successfully! Your request has been sent to the System Administrator for verification and approval, not to a Head of Department (HOD). Your credentials will become active once approved by the administrator.`
         );
         return;
       }
@@ -575,7 +637,7 @@ export default function AuthPage() {
       // 4. Students can log in immediately
       setSuccessMessage('Account registered successfully! Logging you in...');
 
-      const loginRes = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+      const loginRes = await fetch(`${API}/auth/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1202,7 +1264,7 @@ export default function AuthPage() {
                           }}
                           className="w-full bg-slate-50 border border-slate-300 rounded-sm px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-[#B81D24]"
                         >
-                          {(Object.keys(ACADEMIC_PROGRAMS) as ProgramName[]).map((prog) => (
+                          {availablePrograms.map((prog) => (
                             <option key={prog} value={prog}>
                               {prog}
                             </option>
@@ -1285,15 +1347,21 @@ export default function AuthPage() {
                         </label>
                         <select
                           value={supDepartment}
-                          onChange={(e) => setSupDepartment(e.target.value as SupervisorProfile['department'])}
-                          className="w-full bg-slate-50 border border-slate-300 rounded-sm px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-[#B81D24]"
+                          onChange={(e) => setSupDepartment(e.target.value)}
+                          disabled={loadingDepts || departmentsList.length === 0}
+                          className="w-full bg-slate-50 border border-slate-300 rounded-sm px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-[#B81D24] disabled:bg-slate-100 disabled:cursor-not-allowed"
                         >
-                          <option value="Department of Computer Applications">
-                            Department of Computer Applications
-                          </option>
-                          <option value="Department of Computer Science & Engineering">
-                            Department of Computer Science & Engineering
-                          </option>
+                          {loadingDepts ? (
+                            <option value="">Loading departments from database...</option>
+                          ) : departmentsList.length === 0 ? (
+                            <option value="">No departments configured yet by Admin</option>
+                          ) : (
+                            departmentsList.map((d) => (
+                              <option key={d.id} value={d.name}>
+                                {d.name} {d.school_code ? `(${d.school_code})` : ''}
+                              </option>
+                            ))
+                          )}
                         </select>
                       </div>
 

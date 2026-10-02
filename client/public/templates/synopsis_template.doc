@@ -1,0 +1,124 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset='utf-8'>
+<title>Project Synopsis Template - DBUU</title>
+<!--[if gte mso 9]>
+<xml>
+ <w:WordDocument>
+  <w:View>Print</w:View>
+  <w:Zoom>100</w:Zoom>
+  <w:DoNotOptimizeForBrowser/>
+ </w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+@page Section1 {
+  size: 8.5in 11.0in;
+  margin: 1.0in 1.0in 1.0in 1.5in;
+  mso-header-margin: 0.5in;
+  mso-footer-margin: 0.5in;
+}
+div.Section1 { page: Section1; }
+body {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 12pt;
+  line-height: 1.5;
+  color: #111827;
+}
+h1 { font-size: 16pt; font-weight: bold; text-align: center; margin-top: 18pt; margin-bottom: 12pt; text-transform: uppercase; }
+h2 { font-size: 14pt; font-weight: bold; margin-top: 14pt; margin-bottom: 6pt; border-bottom: 1px solid #ccc; padding-bottom: 3pt; }
+h3 { font-size: 12pt; font-weight: bold; margin-top: 10pt; margin-bottom: 4pt; }
+p { margin-bottom: 8pt; text-align: justify; }
+ul, ol { margin-top: 0; margin-bottom: 8pt; padding-left: 24pt; }
+li { margin-bottom: 4pt; }
+.cover-box { text-align: center; margin-top: 40pt; margin-bottom: 40pt; }
+.univ-title { font-size: 18pt; font-weight: bold; margin-bottom: 6pt; color: #B81D24; }
+.dept-title { font-size: 13pt; font-weight: bold; margin-bottom: 24pt; }
+.doc-subtitle { font-size: 14pt; font-weight: bold; margin-top: 20pt; margin-bottom: 20pt; letter-spacing: 1px; }
+.proj-title { font-size: 16pt; font-weight: bold; margin: 20pt 0; text-transform: uppercase; color: #1e3a8a; }
+.table-meta { width: 100%; border-collapse: collapse; margin-top: 30pt; }
+.table-meta td { padding: 6pt; vertical-align: top; font-size: 11pt; }
+.field-label { font-weight: bold; width: 30%; }
+.guideline-box { background-color: #f8fafc; border-left: 4px solid #B81D24; padding: 10pt; margin: 12pt 0; font-size: 10.5pt; }
+</style>
+</head>
+<body>
+<div class="Section1">
+  <div class="cover-box">
+    <div class="univ-title">DEV BHOOMI UTTARAKHAND UNIVERSITY</div>
+    <div class="dept-title">Department of Computer Applications / School of Computing</div>
+    <div class="doc-subtitle">PROJECT SYNOPSIS</div>
+    <p style="font-size: 11pt; color: #555;">Submitted in partial fulfillment of the requirements for the degree of Bachelor of Computer Applications (BCA)</p>
+    
+    <div class="proj-title">[TITLE OF YOUR PROJECT HERE]</div>
+
+    <table class="table-meta" style="margin: 40pt auto 0 auto; width: 90%;">
+      <tr>
+        <td class="field-label">Submitted By:</td>
+        <td>
+          1. [Student Name 1] (University Roll No: __________, ERP: __________)<br/>
+          2. [Student Name 2] (University Roll No: __________, ERP: __________)<br/>
+          3. [Student Name 3] (University Roll No: __________, ERP: __________)<br/>
+          4. [Student Name 4] (University Roll No: __________, ERP: __________)
+        </td>
+      </tr>
+      <tr>
+        <td class="field-label">Under the Supervision of:</td>
+        <td><strong>[Supervisor Name]</strong><br/>[Supervisor Designation], Dept. of Computer Applications</td>
+      </tr>
+      <tr>
+        <td class="field-label">Academic Session:</td>
+        <td>2025 – 2026</td>
+      </tr>
+    </table>
+  </div>
+
+  <br clear="all" style="page-break-before:always" />
+
+  <h2>1. ABSTRACT</h2>
+  <p>[Provide a concise summary of the proposed project in 150 to 250 words. Briefly introduce the background, the primary problem addressed, the methodology or solution proposed, and the anticipated practical outcomes.]</p>
+
+  <h2>2. INTRODUCTION & PROBLEM DEFINITION</h2>
+  <p>[Introduce the problem area. Why is this project being undertaken? What are the key limitations or challenges in the current existing systems or manual processes?]</p>
+
+  <h2>3. OBJECTIVES OF THE PROJECT</h2>
+  <p>The primary objectives of this project are:</p>
+  <ul>
+    <li>To design and develop a web-based/mobile-based solution for [Core function]</li>
+    <li>To implement [Specific key feature 1, e.g., real-time notifications / role-based access control]</li>
+    <li>To optimize [Key performance metric, e.g., query latency / user onboarding workflow]</li>
+    <li>To ensure high reliability, data security, and seamless user interaction.</li>
+  </ul>
+
+  <h2>4. PROPOSED SYSTEM ARCHITECTURE & METHODOLOGY</h2>
+  <p>[Describe the structural design of your system. Include a high-level block diagram or DFD showing interactions between user roles, API backend, and database.]</p>
+  <div class="guideline-box">
+    <strong>Mandatory Requirement:</strong> Attach a clean architecture diagram or data flow diagram illustrating the relationship between client frontend, backend services, and external APIs.
+  </div>
+
+  <h2>5. HARDWARE & SOFTWARE SPECIFICATIONS</h2>
+  <h3>5.1 Hardware Specifications</h3>
+  <ul>
+    <li><strong>Client System:</strong> Dual Core CPU or higher, 4GB RAM minimum, Active Internet Connection.</li>
+    <li><strong>Server / Cloud:</strong> 2 vCPU, 4GB RAM, Cloud Storage (e.g., AWS EC2 / Render / Vercel).</li>
+  </ul>
+
+  <h3>5.2 Software Specifications & Tech Stack</h3>
+  <ul>
+    <li><strong>Frontend:</strong> [e.g., React.js / Next.js / Tailwind CSS]</li>
+    <li><strong>Backend:</strong> [e.g., Django REST Framework / Python 3.12 / Node.js]</li>
+    <li><strong>Database:</strong> [e.g., PostgreSQL / MySQL / SQLite]</li>
+    <li><strong>Version Control & Tools:</strong> Git, GitHub, Postman, VS Code</li>
+  </ul>
+
+  <h2>6. EXPECTED OUTCOMES & MILESTONE TIMELINE</h2>
+  <p>[Detail the expected end deliverables and planned phase completion schedule leading to final presentation.]</p>
+
+  <h2>7. REFERENCES (IEEE FORMAT)</h2>
+  <ol>
+    <li>[1] Author Name, "Title of Paper," <em>Journal/Conference Name</em>, vol. X, no. Y, pp. 1-10, Year.</li>
+    <li>[2] Official Framework Documentation, "Title of Resource," [Online]. Available: https://example.com. [Accessed: Day-Month-Year].</li>
+  </ol>
+</div>
+</body>
+</html>

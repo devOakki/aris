@@ -53,8 +53,13 @@ eggs/
 **/media/
 **/staticfiles/
 .pytest_cache/
+**/.pytest_cache/
 .coverage
+**/.coverage*
 htmlcov/
+**/.mypy_cache/
+**/.ruff_cache/
+pip-wheel-metadata/
 
 # ─── Next.js & Node.js (Client) ───────────────────────────────────────────────
 **/node_modules/
@@ -66,6 +71,9 @@ htmlcov/
 **/.vercel/
 *.tsbuildinfo
 .npm/
+.pnpm-store/
+.yarn/
+package-lock.json.bak
 
 # ─── Environment Variables & Secrets ──────────────────────────────────────────
 .env
@@ -73,6 +81,10 @@ htmlcov/
 **/.env
 **/.env.*
 !**/.env.example
+*.pem
+*.key
+*.cert
+*.crt
 
 # ─── Logs, Debugging & Temporary Files ────────────────────────────────────────
 *.log
@@ -97,7 +109,20 @@ temp/
 ehthumbs.db
 Thumbs.db
 desktop.ini
+Desktop.ini
+$RECYCLE.BIN/
 .vscode/
 .idea/
 *.swp
 *.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ─── AI IDEs & Agent Workspaces ───────────────────────────────────────────────
+.agents/
+.gemini/
+.claude/
+.cursor/
+.windsurf/

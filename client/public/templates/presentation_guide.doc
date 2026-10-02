@@ -1,0 +1,128 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset='utf-8'>
+<title>Presentation Slide Structure & Guidelines - DBUU</title>
+<style>
+@page Section1 {
+  size: 8.5in 11.0in;
+  margin: 1.0in 1.0in 1.0in 1.5in;
+}
+div.Section1 { page: Section1; }
+body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; }
+h1 { font-size: 16pt; font-weight: bold; text-align: center; color: #B81D24; text-transform: uppercase; margin-bottom: 15pt; }
+h2 { font-size: 13pt; font-weight: bold; margin-top: 15pt; color: #1e3a8a; border-bottom: 1px solid #ddd; }
+.slide-box { border: 1px solid #cbd5e1; border-radius: 6px; padding: 10pt; margin: 10pt 0; background: #f8fafc; }
+.slide-num { font-weight: bold; color: #B81D24; font-size: 11pt; }
+.slide-title { font-weight: bold; font-size: 12pt; margin-bottom: 6pt; }
+ul { margin: 4pt 0 4pt 18pt; padding: 0; }
+li { margin-bottom: 3pt; font-size: 10.5pt; }
+</style>
+</head>
+<body>
+<div class="Section1">
+  <h1>PROJECT DEFENSE PRESENTATION GUIDELINES & SLIDE FORMAT</h1>
+  <p><strong>Dev Bhoomi Uttarakhand University — Department of Computer Applications</strong></p>
+  <p>Recommended duration: 10 – 12 minutes presentation + 3 – 5 minutes Q&A. Maximum slides: 12 to 15 slides. Widescreen 16:9 ratio.</p>
+
+  <h2>RECOMMENDED SLIDE-BY-SLIDE STRUCTURE</h2>
+
+  <div class="slide-box">
+    <div class="slide-num">SLIDE 1: TITLE SLIDE</div>
+    <div class="slide-title">Project Title, Team Credentials & Supervisor</div>
+    <ul>
+      <li>Full Project Title (clear, bold font)</li>
+      <li>Course & Semester: BCA Semester 5 / Minor Project</li>
+      <li>Team Members: Name, University Roll No, ERP ID</li>
+      <li>Supervisor: [Name of Mentor], [Designation], Department of Computer Applications</li>
+      <li>Official DBUU Logo</li>
+    </ul>
+  </div>
+
+  <div class="slide-box">
+    <div class="slide-num">SLIDE 2: PROBLEM STATEMENT</div>
+    <div class="slide-title">Background & Problem Definition</div>
+    <ul>
+      <li>What real-world problem does your application solve?</li>
+      <li>Shortcomings of manual or existing digital systems.</li>
+      <li>Target audience / user personas affected.</li>
+    </ul>
+  </div>
+
+  <div class="slide-box">
+    <div class="slide-num">SLIDE 3: OBJECTIVES & SCOPE</div>
+    <div class="slide-title">Target Outcomes</div>
+    <ul>
+      <li>3-4 clear, bulleted objectives of the project.</li>
+      <li>Boundary of current scope vs. out-of-scope items.</li>
+    </ul>
+  </div>
+
+  <div class="slide-box">
+    <div class="slide-num">SLIDE 4: SYSTEM ARCHITECTURE & WORKFLOW (CRITICAL)</div>
+    <div class="slide-title">Architecture Diagram / Data Flow Diagram</div>
+    <ul>
+      <li><strong>MANDATORY:</strong> High-resolution block diagram showing Client, Server, Database, and external APIs.</li>
+      <li>Show authentication flow and data transit protocols.</li>
+    </ul>
+  </div>
+
+  <div class="slide-box">
+    <div class="slide-num">SLIDE 5: TECH STACK & TOOLS (CRITICAL)</div>
+    <div class="slide-title">Technologies Used & Rationale</div>
+    <ul>
+      <li><strong>Frontend:</strong> Next.js / React / Tailwind CSS (Why chosen: performance, reusability)</li>
+      <li><strong>Backend:</strong> Django REST Framework / Python 3 (Why chosen: security, ORM, robust API)</li>
+      <li><strong>Database:</strong> PostgreSQL / SQLite (Relational ACID compliance)</li>
+      <li><strong>Cloud / Storage:</strong> Cloudinary / Supabase / Vercel</li>
+    </ul>
+  </div>
+
+  <div class="slide-box">
+    <div class="slide-num">SLIDES 6 TO 8: CORE MODULES & DATABASE SCHEMA</div>
+    <div class="slide-title">Implementation Breakdown</div>
+    <ul>
+      <li>ER Diagram / Entity Relationships overview.</li>
+      <li>Key business logic modules (e.g., student group locking, supervisor workload quota, auto-evaluation).</li>
+      <li>API routing structure.</li>
+    </ul>
+  </div>
+
+  <div class="slide-box">
+    <div class="slide-num">SLIDES 9 TO 11: DEMONSTRATION & SCREENSHOTS</div>
+    <div class="slide-title">Live System Walkthrough</div>
+    <ul>
+      <li>Crisp screenshots of Student Dashboard, Supervisor Review, and Deliverable Uploads.</li>
+      <li>Live demo or recorded 60-second backup demo video.</li>
+    </ul>
+  </div>
+
+  <div class="slide-box">
+    <div class="slide-num">SLIDE 12: TESTING & VALIDATION</div>
+    <div class="slide-title">Quality Assurance</div>
+    <ul>
+      <li>Test matrix (Unit testing, API validation, User acceptance).</li>
+      <li>Security measures (JWT token auth, role authorization, file size limits).</li>
+    </ul>
+  </div>
+
+  <div class="slide-box">
+    <div class="slide-num">SLIDE 13: CONCLUSION & FUTURE ENHANCEMENTS</div>
+    <div class="slide-title">Wrap-Up & Roadmap</div>
+    <ul>
+      <li>Key takeaways and learned competencies.</li>
+      <li>Planned features for future releases.</li>
+    </ul>
+  </div>
+
+  <div class="slide-box">
+    <div class="slide-num">SLIDE 14: REFERENCES & Q&A</div>
+    <div class="slide-title">Citations & Acknowledgements</div>
+    <ul>
+      <li>IEEE references for foundational papers or tools.</li>
+      <li>GitHub Repository link & QR code for evaluators.</li>
+      <li>"Thank you — Questions & Answers" prompt.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

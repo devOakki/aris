@@ -175,6 +175,18 @@ const AVAILABLE_DELIVERABLES = [
   { id: 'media_files', label: 'Media Demo Files (Images/Video)' },
 ];
 
+const SUGGESTED_FONTS = [
+  'Times New Roman',
+  'Arial',
+  'Calibri',
+  'Georgia',
+  'Garamond',
+  'Roboto',
+  'Inter',
+  'Courier New',
+  'Sans-Serif / Calibri / Arial',
+];
+
 export default function HODDashboardPage() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -241,6 +253,12 @@ export default function HODDashboardPage() {
     template_url: '',
     template_filename: '',
     instructions: '',
+    font_family: '',
+    typography: '',
+    spacing_alignment: '',
+    page_margins: '',
+    page_limit: '',
+    file_format: '',
     late_submission_allowed: false,
     notify_students: true,
   });
@@ -517,6 +535,12 @@ export default function HODDashboardPage() {
       template_url: '',
       template_filename: '',
       instructions: '',
+      font_family: '',
+      typography: '',
+      spacing_alignment: '',
+      page_margins: '',
+      page_limit: '',
+      file_format: '',
       late_submission_allowed: false,
       notify_students: true,
     });
@@ -623,6 +647,12 @@ export default function HODDashboardPage() {
         template_url: '',
         template_filename: '',
         instructions: '',
+        font_family: '',
+        typography: '',
+        spacing_alignment: '',
+        page_margins: '',
+        page_limit: '',
+        file_format: '',
         late_submission_allowed: false,
         notify_students: true,
       });
@@ -1167,12 +1197,24 @@ export default function HODDashboardPage() {
           {/* RIGHT: HOD NAME, DESIGNATION, DEPARTMENT ON LEFT OF CIRCULAR PIC */}
           <div className="flex items-center gap-3 shrink-0">
             {/* HOD Text Details */}
+            {/* Quick Dean Workspace Switcher if user holds dual role */}
+            {(currentUser?.is_dean || currentUser?.role === 'DEAN' || currentUser?.dean_school) && (
+              <a
+                href="/dashboard/dean"
+                className="hidden sm:flex items-center gap-1 px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-bold rounded-sm cursor-pointer transition-colors shadow-2xs"
+                title="Switch to Dean Executive Portal"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                <span>Dean Portal</span>
+              </a>
+            )}
+
             <div className="text-right hidden lg:block">
               <div className="text-xs font-black text-slate-900 leading-tight">
                 {currentUser?.full_name || 'Dr. Department Head'}
               </div>
               <div className="text-[10px] text-slate-500 font-medium">
-                Head of Department •{' '}
+                {(currentUser?.is_dean || currentUser?.role === 'DEAN' || currentUser?.dean_school) ? 'HOD & Dean • ' : 'Head of Department • '}
                 <span className="text-slate-700 font-semibold">
                   {currentUser?.department ? currentUser.department.replace('Department of ', '') : 'Computer Applications'}
                 </span>
@@ -2847,30 +2889,46 @@ export default function HODDashboardPage() {
                           </div>
                         </div>
 
-                        {/* Guidelines and Template */}
-                        {(dl.instructions || dl.template_url) && (
-                          <div className="pt-2 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {dl.instructions && (
-                              <div className="text-[11px] text-slate-600 bg-white p-2 rounded-xs border border-slate-100">
-                                <span className="font-bold text-slate-700 block mb-0.5">Instructions:</span>
-                                {dl.instructions}
+                        {/* Guidelines, Formatting Metrics, and Template */}
+                        {(dl.instructions || dl.template_url || dl.font_family || dl.typography || dl.page_margins || dl.page_limit || dl.file_format) && (
+                          <div className="pt-2 border-t border-slate-200 space-y-2">
+                            {/* Format Metrics Preview */}
+                            {(dl.font_family || dl.typography || dl.spacing_alignment || dl.page_margins || dl.page_limit || dl.file_format) && (
+                              <div className="p-2 bg-white rounded-xs border border-slate-200 text-[10px] text-slate-600 grid grid-cols-2 sm:grid-cols-3 gap-1.5 font-mono">
+                                {dl.font_family && <div><span className="text-slate-400 font-sans">Font:</span> {dl.font_family}</div>}
+                                {dl.typography && <div><span className="text-slate-400 font-sans">Type:</span> {dl.typography}</div>}
+                                {dl.spacing_alignment && <div><span className="text-slate-400 font-sans">Spacing:</span> {dl.spacing_alignment}</div>}
+                                {dl.page_margins && <div><span className="text-slate-400 font-sans">Margins:</span> {dl.page_margins}</div>}
+                                {dl.page_limit && <div><span className="text-slate-400 font-sans">Pages:</span> {dl.page_limit}</div>}
+                                {dl.file_format && <div><span className="text-slate-400 font-sans">Format:</span> {dl.file_format}</div>}
                               </div>
                             )}
-                            {dl.template_url && (
-                              <div className="flex items-center gap-2 bg-blue-50 p-2 rounded-xs border border-blue-100">
-                                <FileText className="w-4 h-4 text-blue-600 shrink-0" />
-                                <div className="truncate">
-                                  <span className="text-[10px] text-blue-900 font-bold block">Format Template:</span>
-                                  <a
-                                    href={dl.template_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-[11px] text-blue-700 font-semibold hover:underline inline-flex items-center gap-1 truncate"
-                                  >
-                                    <Download className="w-3 h-3" />
-                                    <span className="truncate">{dl.template_filename || 'Download Template'}</span>
-                                  </a>
-                                </div>
+
+                            {(dl.instructions || dl.template_url) && (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {dl.instructions && (
+                                  <div className="text-[11px] text-slate-600 bg-white p-2 rounded-xs border border-slate-100">
+                                    <span className="font-bold text-slate-700 block mb-0.5">Instructions:</span>
+                                    {dl.instructions}
+                                  </div>
+                                )}
+                                {dl.template_url && (
+                                  <div className="flex items-center gap-2 bg-blue-50 p-2 rounded-xs border border-blue-100">
+                                    <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+                                    <div className="truncate">
+                                      <span className="text-[10px] text-blue-900 font-bold block">Format Template:</span>
+                                      <a
+                                        href={dl.template_url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="text-[11px] text-blue-700 font-semibold hover:underline inline-flex items-center gap-1 truncate"
+                                      >
+                                        <Download className="w-3 h-3" />
+                                        <span className="truncate">{dl.template_filename || 'Download Template'}</span>
+                                      </a>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
@@ -2888,6 +2946,12 @@ export default function HODDashboardPage() {
                                 template_url: dl.template_url || '',
                                 template_filename: dl.template_filename || '',
                                 instructions: dl.instructions || '',
+                                font_family: dl.font_family || '',
+                                typography: dl.typography || '',
+                                spacing_alignment: dl.spacing_alignment || '',
+                                page_margins: dl.page_margins || '',
+                                page_limit: dl.page_limit || '',
+                                file_format: dl.file_format || '',
                                 late_submission_allowed: dl.late_submission_allowed || false,
                                 notify_students: true,
                               });
@@ -2923,17 +2987,72 @@ export default function HODDashboardPage() {
                     value={deadlineForm.deadline_type}
                     onChange={(e) => {
                       const type = e.target.value;
-                      const defaults: Record<string, string> = {
-                        SYNOPSIS: 'Synopsis & Scope Document',
-                        PPT: 'Presentation (PPT Deck)',
-                        REPORT: 'Final Project Report Submission',
-                        GITHUB: 'GitHub Repository Verification',
-                        CUSTOM: 'Custom Evaluation Milestone',
+                      const defaults: Record<string, {
+                        title: string;
+                        font_family?: string;
+                        typography?: string;
+                        spacing_alignment?: string;
+                        page_margins?: string;
+                        page_limit?: string;
+                        file_format?: string;
+                      }> = {
+                        SYNOPSIS: {
+                          title: 'Synopsis & Scope Document',
+                          font_family: 'Times New Roman',
+                          typography: 'Title 16pt Bold · H2 14pt · Body 12pt',
+                          spacing_alignment: '1.5 Line Spacing · Justified',
+                          page_margins: 'Left 1.5" (Binding) · Others 1.0"',
+                          page_limit: '3–5 Pages',
+                          file_format: '.docx',
+                        },
+                        PPT: {
+                          title: 'Presentation (PPT Deck)',
+                          font_family: 'Sans-Serif / Calibri / Arial',
+                          typography: 'Title 32–40pt Bold · Body min 20pt',
+                          spacing_alignment: '16:9 Widescreen · Max 5-6 bullets/slide',
+                          page_margins: 'Standard Slide Margins',
+                          page_limit: '12–15 Slides',
+                          file_format: '.pptx',
+                        },
+                        REPORT: {
+                          title: 'Final Project Report Submission',
+                          font_family: 'Times New Roman',
+                          typography: 'Ch 16pt (Center) · H1 14pt · Body 12pt',
+                          spacing_alignment: '1.5 Line Spacing · Justified',
+                          page_margins: 'Left 1.5" (Binding) · Others 1.0"',
+                          page_limit: '60–80 Pages (Hardbound)',
+                          file_format: '.docx',
+                        },
+                        GITHUB: {
+                          title: 'GitHub Repository Verification',
+                          font_family: '',
+                          typography: '',
+                          spacing_alignment: '',
+                          page_margins: '',
+                          page_limit: '',
+                          file_format: 'Git Repository URL',
+                        },
+                        CUSTOM: {
+                          title: 'Custom Evaluation Milestone',
+                          font_family: '',
+                          typography: '',
+                          spacing_alignment: '',
+                          page_margins: '',
+                          page_limit: '',
+                          file_format: '',
+                        },
                       };
+                      const def = defaults[type];
                       setDeadlineForm((prev) => ({
                         ...prev,
                         deadline_type: type,
-                        title: defaults[type] || '',
+                        title: def?.title || '',
+                        font_family: def?.font_family || prev.font_family,
+                        typography: def?.typography || prev.typography,
+                        spacing_alignment: def?.spacing_alignment || prev.spacing_alignment,
+                        page_margins: def?.page_margins || prev.page_margins,
+                        page_limit: def?.page_limit || prev.page_limit,
+                        file_format: def?.file_format || prev.file_format,
                       }));
                     }}
                     className="w-full bg-white border border-slate-300 rounded-sm px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-[#B81D24]"
@@ -2986,6 +3105,198 @@ export default function HODDashboardPage() {
                   <label htmlFor="lateSub" className="text-xs text-slate-700 cursor-pointer">
                     Allow late submissions after due date (flagged for review)
                   </label>
+                </div>
+              </div>
+
+              {/* Deliverable Formatting & Metrics Section */}
+              <div className="p-3 bg-white border border-slate-200 rounded-sm space-y-3">
+                <div className="text-[11px] font-bold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-1.5 flex items-center justify-between">
+                  <span>Document Typography &amp; Formatting Guidelines</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Shown dynamically on Student Formats page</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  {/* Font Family */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Font Family
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Times New Roman, Arial, Calibri"
+                      value={deadlineForm.font_family}
+                      onChange={(e) => setDeadlineForm({ ...deadlineForm, font_family: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-300 rounded-sm px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-[#B81D24]"
+                    />
+                    <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                      <span className="text-[10px] text-slate-400 font-medium mr-1">Suggested:</span>
+                      {SUGGESTED_FONTS.map((font) => (
+                        <button
+                          key={font}
+                          type="button"
+                          onClick={() => setDeadlineForm((prev) => ({ ...prev, font_family: font }))}
+                          className={`px-1.5 py-0.5 text-[10px] rounded-xs border transition-colors cursor-pointer ${
+                            deadlineForm.font_family === font
+                              ? 'bg-[#B81D24] text-white border-[#B81D24] font-bold'
+                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                          }`}
+                        >
+                          {font}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Typography */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Typography Hierarchy (Heading &amp; Body)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Title 16pt Bold · H2 14pt · Body 12pt"
+                      value={deadlineForm.typography}
+                      onChange={(e) => setDeadlineForm({ ...deadlineForm, typography: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-300 rounded-sm px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-[#B81D24]"
+                    />
+                    <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                      <span className="text-[10px] text-slate-400 font-medium mr-1">Presets:</span>
+                      {[
+                        'Title 16pt Bold · H2 14pt · Body 12pt',
+                        'Title 32–40pt Bold · Body min 20pt',
+                        'Ch 16pt (Center) · H1 14pt · Body 12pt',
+                        'Title 24pt · Authors 10pt · Body 10pt',
+                      ].map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setDeadlineForm((prev) => ({ ...prev, typography: p }))}
+                          className="px-1.5 py-0.5 bg-white border border-slate-200 text-slate-600 text-[10px] rounded-xs hover:bg-slate-100 cursor-pointer truncate max-w-[170px]"
+                          title={p}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Spacing & Alignment */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Spacing &amp; Alignment
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 1.5 Line Spacing · Justified"
+                      value={deadlineForm.spacing_alignment}
+                      onChange={(e) => setDeadlineForm({ ...deadlineForm, spacing_alignment: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-300 rounded-sm px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-[#B81D24]"
+                    />
+                    <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                      <span className="text-[10px] text-slate-400 font-medium mr-1">Presets:</span>
+                      {[
+                        '1.5 Line Spacing · Justified',
+                        'Single Spacing · Justified',
+                        '16:9 Widescreen · Max 5-6 bullets/slide',
+                        'Single Spacing · 2-Column Grid',
+                      ].map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setDeadlineForm((prev) => ({ ...prev, spacing_alignment: p }))}
+                          className="px-1.5 py-0.5 bg-white border border-slate-200 text-slate-600 text-[10px] rounded-xs hover:bg-slate-100 cursor-pointer"
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Page Margins */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Page Margins
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Left 1.5&quot; (Binding) · Others 1.0&quot;"
+                      value={deadlineForm.page_margins}
+                      onChange={(e) => setDeadlineForm({ ...deadlineForm, page_margins: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-300 rounded-sm px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-[#B81D24]"
+                    />
+                    <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                      <span className="text-[10px] text-slate-400 font-medium mr-1">Presets:</span>
+                      {[
+                        'Left 1.5" (Binding) · Others 1.0"',
+                        'Standard 1.0" All Sides',
+                        '0.75" All Sides',
+                        'Standard Slide Margins',
+                      ].map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setDeadlineForm((prev) => ({ ...prev, page_margins: p }))}
+                          className="px-1.5 py-0.5 bg-white border border-slate-200 text-slate-600 text-[10px] rounded-xs hover:bg-slate-100 cursor-pointer"
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Page / Slide Limit */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      No. of Pages / Slides
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 3–5 Pages or 12–15 Slides"
+                      value={deadlineForm.page_limit}
+                      onChange={(e) => setDeadlineForm({ ...deadlineForm, page_limit: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-300 rounded-sm px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-[#B81D24]"
+                    />
+                    <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                      <span className="text-[10px] text-slate-400 font-medium mr-1">Presets:</span>
+                      {['3–5 Pages', '12–15 Slides', '60–80 Pages (Hardbound)', '4–6 Pages'].map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setDeadlineForm((prev) => ({ ...prev, page_limit: p }))}
+                          className="px-1.5 py-0.5 bg-white border border-slate-200 text-slate-600 text-[10px] rounded-xs hover:bg-slate-100 cursor-pointer"
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* File Format / Type */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      File Format / Type
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. .docx, .pptx, .pdf"
+                      value={deadlineForm.file_format}
+                      onChange={(e) => setDeadlineForm({ ...deadlineForm, file_format: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-300 rounded-sm px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-[#B81D24]"
+                    />
+                    <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                      <span className="text-[10px] text-slate-400 font-medium mr-1">Presets:</span>
+                      {['.docx', '.pptx', '.pdf', '.docx / .pdf', '.zip'].map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setDeadlineForm((prev) => ({ ...prev, file_format: p }))}
+                          className="px-1.5 py-0.5 bg-white border border-slate-200 text-slate-600 text-[10px] rounded-xs hover:bg-slate-100 cursor-pointer"
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 

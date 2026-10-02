@@ -53,7 +53,7 @@ class StudentProfile(models.Model):
     
 class SupervisorProfile(models.Model):
     class ApprovalStatus(models.TextChoices):
-        PENDING  = 'PENDING',  'Pending HOD Approval'
+        PENDING  = 'PENDING',  'Pending Administrator Approval'
         APPROVED = 'APPROVED', 'Approved'
         REJECTED = 'REJECTED', 'Rejected'
 
@@ -109,4 +109,51 @@ class EmailOTPVerification(models.Model):
 
     def __str__(self):
         return f"OTP for {self.email} - {'Verified' if self.is_verified else 'Pending'}"
+
+
+class School(models.Model):
+    name = models.CharField(max_length=200, unique=True)
+    code = models.CharField(max_length=50, unique=True)
+    dean = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='managed_school'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'academic_schools'
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+
+class Department(models.Model):
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name='departments'
+    )
+    name = models.CharField(max_length=200)
+    code = models.CharField(max_length=50, blank=True, default='')
+    hods = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name='managed_departments'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'academic_departments'
+        unique_together = ('school', 'name')
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} - {self.school.code}"
+
 

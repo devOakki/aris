@@ -166,11 +166,13 @@ class ApprovalActionSerializer(serializers.Serializer):
 
 
 class FacultyApprovalDossierSerializer(serializers.ModelSerializer):
+    user_id          = serializers.UUIDField(source='user.id', read_only=True)
     university_id    = serializers.CharField(source='user.university_id', read_only=True)
     full_name        = serializers.CharField(source='user.get_full_name', read_only=True)
     email            = serializers.EmailField(source='user.email', read_only=True)
     phone            = serializers.CharField(source='user.phone', read_only=True)
     avatar_url       = serializers.CharField(source='user.avatar_url', read_only=True)
+    current_role     = serializers.CharField(source='user.role', read_only=True)
     is_active        = serializers.BooleanField(source='user.is_active', read_only=True)
     approved_by_name = serializers.CharField(source='approved_by.get_full_name', read_only=True, default='')
 
@@ -178,6 +180,7 @@ class FacultyApprovalDossierSerializer(serializers.ModelSerializer):
         model = SupervisorProfile
         fields = (
             'id',
+            'user_id',
             'university_id',
             'full_name',
             'email',
@@ -192,6 +195,7 @@ class FacultyApprovalDossierSerializer(serializers.ModelSerializer):
             'rejection_reason',
             'approved_by_name',
             'approved_at',
+            'current_role',
             'is_active',
             'created_at',
         )

@@ -1,0 +1,58 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset='utf-8'>
+<title>IEEE 2-Column Conference Template - DBUU</title>
+<style>
+@page Section1 {
+  size: 8.5in 11.0in;
+  margin: 0.75in;
+  mso-header-margin: 0.5in;
+  mso-footer-margin: 0.5in;
+}
+div.Section1 { page: Section1; }
+body { font-family: 'Times New Roman', serif; font-size: 10pt; line-height: 1.15; }
+h1.paper-title { font-size: 24pt; font-weight: bold; text-align: center; margin-bottom: 12pt; }
+.authors-box { text-align: center; margin-bottom: 20pt; font-size: 10pt; }
+.abstract-box { margin: 10pt 20pt; font-weight: bold; }
+.two-col { column-count: 2; column-gap: 0.3in; text-align: justify; }
+h2 { font-size: 10pt; font-weight: bold; text-transform: uppercase; text-align: center; margin-top: 10pt; margin-bottom: 4pt; }
+p { margin-bottom: 6pt; text-indent: 14pt; }
+</style>
+</head>
+<body>
+<div class="Section1">
+  <h1 class="paper-title">[TITLE OF YOUR RESEARCH PAPER]</h1>
+  <div class="authors-box">
+    [Student Name 1], [Student Name 2], [Student Name 3]<br/>
+    <em>Department of Computer Applications, Dev Bhoomi Uttarakhand University, Dehradun, India</em><br/>
+    Email: {student1, student2}@dbuu.ac.in
+  </div>
+
+  <div class="abstract-box">
+    <em><strong>Abstract</strong></em>—[Write a concise summary of the research paper in 150-200 words. Describe the objective, methodology, core experimental results, and key conclusions reached.]<br/><br/>
+    <em><strong>Keywords</strong></em>—Software Engineering, System Design, REST APIs, Cloud Computing, Database Optimization.
+  </div>
+
+  <div class="two-col">
+    <h2>I. INTRODUCTION</h2>
+    <p>This template conforms to the IEEE conference publication format. Project research papers should highlight the original technical contribution or comparative system analysis conducted during development.</p>
+
+    <h2>II. RELATED WORK</h2>
+    <p>Existing state of the art systems and referenced comparative architectures are discussed here.</p>
+
+    <h2>III. PROPOSED ARCHITECTURE</h2>
+    <p>System models, data flow pipelines, algorithms, and technical design decisions are outlined in detail.</p>
+
+    <h2>IV. EXPERIMENTAL EVALUATION</h2>
+    <p>Testing metrics, latency benchmarks, or user satisfaction evaluation matrices.</p>
+
+    <h2>V. CONCLUSION</h2>
+    <p>Concludes the research paper and highlights ongoing research scopes.</p>
+
+    <h2>REFERENCES</h2>
+    <p style="text-indent: 0;">[1] J. Clerk Maxwell, "A Treatise on Electricity and Magnetism," 3rd ed., vol. 2. Oxford: Clarendon, 1892, pp.68–73.</p>
+    <p style="text-indent: 0;">[2] K. Elissa, "Title of paper if known," unpublished.</p>
+  </div>
+</div>
+</body>
+</html>

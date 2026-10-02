@@ -8,6 +8,8 @@ from .views import (
     MyStudentGroupView,
     MyStudentGroupSelectSupervisorView,
     GroupJoinRequestView,
+    GroupJoinRequestRespondView,
+    GroupJoinRequestCancelView,
     SupervisorGroupsListView,
     ProjectIdeaListCreateView,
     ProjectProposalCreateView,
@@ -29,6 +31,8 @@ urlpatterns = [
     path('groups/my-group/select-supervisor/', MyStudentGroupSelectSupervisorView.as_view(), name='my-group-select-supervisor'),
     path('groups/supervisor-groups/', SupervisorGroupsListView.as_view(), name='supervisor-groups'),
     path('groups/<uuid:group_id>/request-join/', GroupJoinRequestView.as_view(), name='group-join-request'),
+    path('groups/<uuid:group_id>/join-requests/<uuid:request_id>/respond/', GroupJoinRequestRespondView.as_view(), name='group-join-request-respond'),
+    path('groups/<uuid:group_id>/join-requests/<uuid:request_id>/cancel/', GroupJoinRequestCancelView.as_view(), name='group-join-request-cancel'),
 
     # Ideas Bank
     path('ideas/', ProjectIdeaListCreateView.as_view(), name='idea-list-create'),

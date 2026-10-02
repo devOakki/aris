@@ -1,0 +1,155 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset='utf-8'>
+<title>Final Project Report Template - DBUU</title>
+<!--[if gte mso 9]>
+<xml>
+ <w:WordDocument>
+  <w:View>Print</w:View>
+  <w:Zoom>100</w:Zoom>
+  <w:DoNotOptimizeForBrowser/>
+ </w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+@page Section1 {
+  size: 8.5in 11.0in;
+  margin: 1.0in 1.0in 1.0in 1.5in;
+  mso-header-margin: 0.5in;
+  mso-footer-margin: 0.5in;
+}
+div.Section1 { page: Section1; }
+body {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 12pt;
+  line-height: 1.5;
+  color: #111827;
+}
+h1 { font-size: 16pt; font-weight: bold; text-align: center; margin-top: 24pt; margin-bottom: 12pt; text-transform: uppercase; }
+h2 { font-size: 14pt; font-weight: bold; margin-top: 18pt; margin-bottom: 8pt; border-bottom: 1px solid #ccc; padding-bottom: 4pt; }
+h3 { font-size: 12pt; font-weight: bold; margin-top: 12pt; margin-bottom: 4pt; }
+p { margin-bottom: 8pt; text-align: justify; }
+ul, ol { margin-top: 0; margin-bottom: 8pt; padding-left: 24pt; }
+li { margin-bottom: 4pt; }
+.univ-header { text-align: center; margin-top: 30pt; }
+.univ-name { font-size: 18pt; font-weight: bold; color: #B81D24; }
+.dept-name { font-size: 13pt; font-weight: bold; margin-top: 4pt; }
+.report-title { font-size: 16pt; font-weight: bold; margin: 30pt 0 10pt 0; text-transform: uppercase; color: #1e3a8a; }
+.sign-table { width: 100%; border-collapse: collapse; margin-top: 60pt; }
+.sign-table td { width: 50%; vertical-align: bottom; font-size: 11pt; padding: 10pt; }
+.guideline-alert { background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #B81D24; padding: 10pt; margin: 12pt 0; font-size: 10pt; color: #991b1b; }
+</style>
+</head>
+<body>
+<div class="Section1">
+  <!-- TITLE PAGE -->
+  <div class="univ-header">
+    <div class="univ-name">DEV BHOOMI UTTARAKHAND UNIVERSITY</div>
+    <div class="dept-name">School of Computer Applications</div>
+    <br/><br/>
+    <p style="font-size: 12pt; font-weight: bold;">A MINOR PROJECT REPORT ON</p>
+    <div class="report-title">[NAME OF THE PROJECT IN FULL CAPITALS]</div>
+    <br/>
+    <p style="font-size: 11pt;">Submitted in partial fulfillment of the requirements for the award of degree of</p>
+    <p style="font-size: 13pt; font-weight: bold;">BACHELOR OF COMPUTER APPLICATIONS (BCA)</p>
+    <br/><br/>
+    <table style="width: 100%; margin-top: 40pt;">
+      <tr>
+        <td style="text-align: left; vertical-align: top; width: 50%;">
+          <strong>Submitted By:</strong><br/>
+          [Student 1 Name] (Roll: ________)<br/>
+          [Student 2 Name] (Roll: ________)<br/>
+          [Student 3 Name] (Roll: ________)<br/>
+          [Student 4 Name] (Roll: ________)
+        </td>
+        <td style="text-align: right; vertical-align: top; width: 50%;">
+          <strong>Under the Guidance of:</strong><br/>
+          <strong>[Supervisor Name]</strong><br/>
+          [Designation]<br/>
+          Dept. of Computer Applications
+        </td>
+      </tr>
+    </table>
+    <br/><br/><br/>
+    <p style="font-size: 11pt; font-weight: bold;">ACADEMIC YEAR 2025–2026</p>
+  </div>
+
+  <br clear="all" style="page-break-before:always" />
+
+  <!-- CERTIFICATE -->
+  <h1>CERTIFICATE OF ORIGINALITY</h1>
+  <p>This is to certify that the project entitled <strong>"[TITLE OF PROJECT]"</strong> submitted by <strong>[Student Names & Roll Numbers]</strong> in partial fulfillment of the requirements for the award of the degree of <strong>Bachelor of Computer Applications</strong> at Dev Bhoomi Uttarakhand University, is a bonafide record of original work carried out by them under my supervision and guidance.</p>
+  <p>To the best of my knowledge, the matter embodied in this report has not been submitted to any other University or Institute for the award of any degree or diploma.</p>
+  
+  <table class="sign-table">
+    <tr>
+      <td>
+        ___________________________<br/>
+        <strong>[Supervisor Name]</strong><br/>
+        Project Supervisor<br/>
+        Dept. of Computer Applications
+      </td>
+      <td style="text-align: right;">
+        ___________________________<br/>
+        <strong>Head of Department</strong><br/>
+        School of Computer Applications<br/>
+        DBUU, Dehradun
+      </td>
+    </tr>
+  </table>
+
+  <br clear="all" style="page-break-before:always" />
+
+  <!-- DECLARATION -->
+  <h1>DECLARATION</h1>
+  <p>We hereby declare that this project report entitled <strong>"[TITLE OF PROJECT]"</strong> is our own original work done under the guidance of <strong>[Supervisor Name]</strong>, Department of Computer Applications, Dev Bhoomi Uttarakhand University. We have properly acknowledged and cited all references and sources used in this work.</p>
+  <br/><br/>
+  <p>Date: ______________<br/>Place: Dehradun</p>
+  <br/>
+  <p style="text-align: right;">
+    [Student Signature 1] ____________________<br/>
+    [Student Signature 2] ____________________<br/>
+    [Student Signature 3] ____________________<br/>
+    [Student Signature 4] ____________________
+  </p>
+
+  <br clear="all" style="page-break-before:always" />
+
+  <!-- TABLE OF CONTENTS SKELETON -->
+  <h1>TABLE OF CONTENTS</h1>
+  <p><em>(Auto-generate in Microsoft Word via References &gt; Table of Contents)</em></p>
+  <p><strong>1. Introduction</strong> ......................................................................................... 1</p>
+  <p><strong>2. Literature Survey</strong> .................................................................................... 6</p>
+  <p><strong>3. System Analysis & Requirement Specifications</strong> ............................................ 12</p>
+  <p><strong>4. System Design & Architectural Modeling</strong> .................................................... 18</p>
+  <p><strong>5. Implementation & Modules</strong> ...................................................................... 28</p>
+  <p><strong>6. Testing & Results</strong> ..................................................................................... 38</p>
+  <p><strong>7. Conclusion & Scope for Future Work</strong> .......................................................... 45</p>
+  <p><strong>References (IEEE Style)</strong> ............................................................................... 48</p>
+
+  <br clear="all" style="page-break-before:always" />
+
+  <!-- CHAPTER 1 -->
+  <h2>CHAPTER 1: INTRODUCTION</h2>
+  <p>[Detailed introduction of the project, problem background, motivational context, targeted objectives, and report layout overview.]</p>
+
+  <h2>CHAPTER 2: LITERATURE SURVEY</h2>
+  <p>[Review of 4-6 existing research papers, commercial applications, or competitor software. Highlight the research gap and how your project addresses the identified shortcomings.]</p>
+
+  <h2>CHAPTER 3: SYSTEM REQUIREMENT ANALYSIS</h2>
+  <p>[Functional requirements, non-functional requirements (speed, security, responsiveness), and feasibility study (technical, economic, operational).] </p>
+
+  <h2>CHAPTER 4: SYSTEM DESIGN & ARCHITECTURE</h2>
+  <p>[Include System Architecture Diagram, Entity Relationship (ER) Diagram, Data Flow Diagram (Level 0, Level 1), Database Table schema specifications, and UI Wireframes.]</p>
+
+  <h2>CHAPTER 5: IMPLEMENTATION DETAILS</h2>
+  <p>[Discuss frontend and backend implementation, key algorithms, API endpoints, authentication flows, and screenshot walkthroughs with captions.]</p>
+
+  <h2>CHAPTER 6: SYSTEM TESTING & VALIDATION</h2>
+  <p>[Test cases, Unit Testing, Integration Testing, User Acceptance Testing (UAT), and validation matrices with Pass/Fail status.]</p>
+
+  <h2>CHAPTER 7: CONCLUSION & FUTURE SCOPE</h2>
+  <p>[Summary of project achievements against original objectives and planned future feature expansions.]</p>
+</div>
+</body>
+</html>

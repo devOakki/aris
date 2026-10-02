@@ -24,6 +24,7 @@ class CustomUser(AbstractBaseUser,PermissionsMixin):
         SUPERVISOR  = 'SUPERVISOR', 'Supervisor'
         HOD         = 'HOD',        'HOD'
         DEAN        = 'DEAN',       'Dean'
+        ADMIN       = 'ADMIN',      'Admin'
         
     id            = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     university_id = models.CharField(max_length=50, unique=True)  

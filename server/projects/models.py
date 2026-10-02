@@ -22,8 +22,9 @@ class ProjectTrack(models.Model):
     target_program        = models.CharField(max_length=50)
     target_semester       = models.PositiveSmallIntegerField()
     is_mandatory          = models.BooleanField(default=True)
-    max_group_size        = models.PositiveSmallIntegerField(default=3)
-    required_deliverables = models.JSONField(default=list)
+    max_group_size             = models.PositiveSmallIntegerField(default=3)
+    max_groups_per_supervisor  = models.PositiveSmallIntegerField(default=3, help_text="Maximum groups a supervisor can mentor in this track (set by HOD).")
+    required_deliverables      = models.JSONField(default=list)
     min_media_files       = models.PositiveSmallIntegerField(default=5)
     max_media_files       = models.PositiveSmallIntegerField(default=10)
     coordinator           = models.ForeignKey(
@@ -106,6 +107,30 @@ class GroupMember(models.Model):
         return f"{self.student.user.get_full_name()} in {self.group.name} ({self.member_role})"
 
 
+class GroupJoinRequest(models.Model):
+    class Status(models.TextChoices):
+        PENDING   = 'PENDING',   'Pending'
+        ACCEPTED  = 'ACCEPTED',  'Accepted'
+        REJECTED  = 'REJECTED',  'Rejected'
+        CANCELLED = 'CANCELLED', 'Cancelled'
+
+    id         = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    group      = models.ForeignKey(StudentGroup, on_delete=models.CASCADE, related_name='join_requests')
+    student    = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='group_join_requests')
+    status     = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    message    = models.CharField(max_length=255, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'group_join_requests'
+        unique_together = ('group', 'student')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.student.user.get_full_name()} -> {self.group.name} ({self.status})"
+
+
 class ProjectIdea(models.Model):
     id                  = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     supervisor          = models.ForeignKey(SupervisorProfile, on_delete=models.CASCADE, related_name='posted_ideas')
@@ -154,11 +179,21 @@ class ProjectProposal(models.Model):
         on_delete=models.SET_NULL,
         related_name='proposals'
     )
+    supervisor          = models.ForeignKey(
+        SupervisorProfile,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='proposals_received'
+    )
     title               = models.CharField(max_length=200)
     problem_statement   = models.TextField()
     novelty             = models.TextField()
+    solution            = models.TextField(blank=True, default='')
     domain              = models.CharField(max_length=100)
     technologies        = models.JSONField(default=list)
+    supporting_doc_url  = models.URLField(blank=True, default='', max_length=500)
+    supporting_doc_name = models.CharField(max_length=255, blank=True, default='')
     status              = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
     version             = models.PositiveSmallIntegerField(default=1)
     supervisor_feedback = models.TextField(blank=True, default='')
@@ -189,6 +224,12 @@ class ProjectDeadline(models.Model):
     due_date                = models.DateTimeField()
     template_url            = models.URLField(blank=True, default='', max_length=500)
     template_filename       = models.CharField(max_length=255, blank=True, default='')
+    font_family             = models.CharField(max_length=100, blank=True, default='')
+    typography              = models.CharField(max_length=200, blank=True, default='')
+    spacing_alignment       = models.CharField(max_length=200, blank=True, default='')
+    page_margins            = models.CharField(max_length=200, blank=True, default='')
+    page_limit              = models.CharField(max_length=100, blank=True, default='')
+    file_format             = models.CharField(max_length=50, blank=True, default='')
     instructions            = models.TextField(blank=True, default='')
     late_submission_allowed = models.BooleanField(default=False)
     set_by                  = models.ForeignKey(
